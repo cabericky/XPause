@@ -58,6 +58,10 @@ export const renderExercisePanelHtml = (
   const remaining = Math.max(0, exercise.duration - elapsed);
   const progress = Math.min(100, (elapsed / exercise.duration) * 100);
   const themeClass = `xp-theme-${theme}`;
+  const imageUrl =
+    typeof chrome !== 'undefined' && chrome?.runtime?.getURL
+      ? chrome.runtime.getURL(`assets/exercises/${exercise.id}.webp`)
+      : `/src/assets/exercises/${exercise.id}.webp`;
 
   return `
     <aside class="xp-panel ${themeClass} ${urgency}" data-exercise-id="${exercise.id}" role="dialog" aria-modal="${urgency === 'critical'}" aria-labelledby="xpause-title">
@@ -68,7 +72,9 @@ export const renderExercisePanelHtml = (
         </div>
         <button class="xp-close" type="button" data-action="close" aria-label="Dismiss">X</button>
       </div>
-      <div class="xp-visual ${exercise.id}" aria-hidden="true"><span class="xp-shape"></span></div>
+      <div class="xp-visual ${exercise.id}" aria-hidden="true">
+        <img class="xp-exercise-media" src="${imageUrl}" alt="${exercise.title}" width="88" height="88" />
+      </div>
       <div class="xp-ring" style="--progress: ${progress}%"><strong>${remaining}</strong><span>sec</span></div>
       <div class="xp-copy"><h3>${step.label}</h3><p>${step.cue}</p></div>
       <div class="xp-dots" aria-label="Step ${stepIndex + 1} of ${exercise.steps.length}">

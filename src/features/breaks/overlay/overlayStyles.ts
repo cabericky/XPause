@@ -37,6 +37,7 @@ export const overlayStyles = `
   .xp-theme-dark .xp-close { background: rgba(255,255,255,.08); color: #E5EDF6; }
   .xp-visual { display: grid; place-items: center; height: 116px; margin: 16px 0; border: 1px solid #E2E8F0; border-radius: 9px; background: #F8FAFC; overflow: hidden; }
   .xp-theme-dark .xp-visual { border-color: rgba(148, 163, 184, .14); background: rgba(15, 23, 42, .72); }
+  .xp-exercise-media { display: block; width: 88px; height: 88px; object-fit: contain; pointer-events: none; user-select: none; }
   .xp-shape { display: block; width: 74px; height: 74px; }
   .blink .xp-shape { height: 42px; border: 4px solid #16A34A; border-radius: 50%; animation: xpBlink 3s ease-in-out infinite; }
   .wrist .xp-shape { border: 5px solid #0284C7; border-left-color: transparent; border-radius: 50%; animation: xpRotate 2.6s linear infinite; }

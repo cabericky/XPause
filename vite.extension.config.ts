@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { build, defineConfig } from 'vite';
 
@@ -40,6 +40,12 @@ const extensionManifest = {
       js: ['assets/contentScript.js'],
       run_at: 'document_idle'
     }
+  ],
+  web_accessible_resources: [
+    {
+      resources: ['assets/exercises/*'],
+      matches: ['http://*/*', 'https://*/*']
+    }
   ]
 };
 
@@ -49,6 +55,14 @@ const writeManifest = () => ({
     mkdirSync('dist-extension', { recursive: true });
     mkdirSync(resolve('dist-extension', '_locales', 'en'), { recursive: true });
     copyFileSync(resolve('src', 'assets', 'logo.png'), resolve('dist-extension', extensionLogoPath));
+
+    const exercisesSrc = resolve('src', 'assets', 'exercises');
+    const exercisesDist = resolve('dist-extension', 'assets', 'exercises');
+    if (existsSync(exercisesSrc)) {
+      mkdirSync(exercisesDist, { recursive: true });
+      cpSync(exercisesSrc, exercisesDist, { recursive: true });
+    }
+
     writeFileSync(
       resolve('dist-extension', 'manifest.json'),
       `${JSON.stringify(extensionManifest, null, 2)}\n`
