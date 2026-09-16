@@ -1,98 +1,26 @@
-type Sensitivity = 'low' | 'medium' | 'high';
-type BreakUrgency = 'none' | 'soft' | 'urgent' | 'critical';
-type ExerciseId = 'blink' | 'wrist' | 'neck';
-type UsageCategory = 'work' | 'entertainment' | 'social';
-type SoundTheme = 'soft' | 'chime' | 'pulse' | 'custom';
-type ThemeMode = 'light' | 'dark' | 'system';
-type ReminderKind = 'fatigue' | 'social';
+import { exercises } from '../data/exercises';
+import type {
+  BreakUrgency,
+  ExerciseDefinition,
+  ExtensionStats,
+  InsightSnapshot,
+  ReminderKind,
+  Settings as ExtensionSettings,
+  SoundTheme,
+  ThemeMode,
+  UsageCategory,
+  UsageDay
+} from '../types';
+import {
+  calculateSocialFatigue,
+  clamp,
+  emptySignals,
+  getUrgency,
+  scoreActivity
+} from '../utils/fatigueScorer';
 
 interface WindowWithLegacyAudio extends Window {
   webkitAudioContext?: typeof AudioContext;
-}
-
-interface ActivitySignals {
-  mouseVelocity: number;
-  idleMs: number;
-  keypressesPerMinute: number;
-  typingBurstCount: number;
-  scrollVelocity: number;
-  scrollDepth: number;
-  visibilityChanges: number;
-  continuousUseMinutes: number;
-}
-
-interface ExerciseStep {
-  label: string;
-  duration: number;
-  cue: string;
-}
-
-interface ExerciseDefinition {
-  id: ExerciseId;
-  title: string;
-  shortLabel: string;
-  duration: number;
-  steps: ExerciseStep[];
-}
-
-interface ExtensionSettings {
-  sessionLengthMinutes: number;
-  sensitivity: Sensitivity;
-  enabledExercises: ExerciseId[];
-  soundEnabled: boolean;
-  notificationsEnabled: boolean;
-  soundTheme: SoundTheme;
-  customSoundDataUrl?: string;
-  customSoundName?: string;
-  themeMode: ThemeMode;
-  dailyBreakGoal: number;
-}
-
-interface ExtensionStats {
-  xp: number;
-  completed: number;
-  partial: number;
-  skipped: number;
-  daily: {
-    date: string;
-    xp: number;
-    completed: number;
-    partial: number;
-    skipped: number;
-    missed: number;
-    blink: number;
-    wrist: number;
-    neck: number;
-  };
-  completedByExercise: Record<ExerciseId, number>;
-  usage: UsageAnalytics;
-}
-
-interface UsageDay {
-  date: string;
-  screenMs: number;
-  activeMs: number;
-  passiveMs: number;
-  categories: Record<UsageCategory, number>;
-  socialVisits: number;
-  scrollEvents: number;
-  disconnectPrompts: number;
-  eyeStrainPrompts: number;
-}
-
-interface UsageAnalytics {
-  today: UsageDay;
-  week: Record<string, UsageDay>;
-}
-
-interface InsightSnapshot {
-  socialFatigueScore: number;
-  eyeStrainMinutes: number;
-  category: UsageCategory;
-  passiveRatio: number;
-  schedule: string[];
-  disconnectSuggestion: string;
-  updatedAt: number;
 }
 
 const defaultSettings: ExtensionSettings = {
@@ -105,42 +33,6 @@ const defaultSettings: ExtensionSettings = {
   themeMode: 'light',
   dailyBreakGoal: 4
 };
-
-const exercises: ExerciseDefinition[] = [
-  {
-    id: 'blink',
-    title: 'Blink Exercise',
-    shortLabel: 'Eyes',
-    duration: 60,
-    steps: [
-      { label: 'Look 20 feet away', duration: 20, cue: 'Relax your gaze into the distance.' },
-      { label: 'Slow blink set', duration: 20, cue: 'Close, release, and reopen your eyes.' },
-      { label: 'Soft focus reset', duration: 20, cue: 'Let your eyes rest before returning.' }
-    ]
-  },
-  {
-    id: 'wrist',
-    title: 'Wrist Stretch',
-    shortLabel: 'Wrists',
-    duration: 75,
-    steps: [
-      { label: 'Gentle rotations', duration: 25, cue: 'Circle both wrists slowly.' },
-      { label: 'Palm flex', duration: 25, cue: 'Press fingers back with an easy stretch.' },
-      { label: 'Release shakeout', duration: 25, cue: 'Shake the hands loose.' }
-    ]
-  },
-  {
-    id: 'neck',
-    title: 'Neck Rotation',
-    shortLabel: 'Neck',
-    duration: 90,
-    steps: [
-      { label: 'Turn left and hold', duration: 30, cue: 'Keep shoulders low and jaw relaxed.' },
-      { label: 'Turn right and hold', duration: 30, cue: 'Move slowly through the center.' },
-      { label: 'Forward release', duration: 30, cue: 'Drop chin gently and breathe.' }
-    ]
-  }
-];
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -218,58 +110,6 @@ const workHosts = [
   'jira.com',
   'atlassian.net'
 ];
-
-const thresholds: Record<Sensitivity, { soft: number; urgent: number; critical: number }> = {
-  low: { soft: 70, urgent: 90, critical: 96 },
-  medium: { soft: 60, urgent: 85, critical: 94 },
-  high: { soft: 48, urgent: 76, critical: 90 }
-};
-
-const emptySignals = (): ActivitySignals => ({
-  mouseVelocity: 0,
-  idleMs: 0,
-  keypressesPerMinute: 0,
-  typingBurstCount: 0,
-  scrollVelocity: 0,
-  scrollDepth: 0,
-  visibilityChanges: 0,
-  continuousUseMinutes: 0
-});
-
-const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
-
-const getUrgency = (score: number, sensitivity: Sensitivity): BreakUrgency => {
-  const level = thresholds[sensitivity];
-  if (score >= level.critical) return 'critical';
-  if (score >= level.urgent) return 'urgent';
-  if (score >= level.soft) return 'soft';
-  return 'none';
-};
-
-const scoreActivity = (
-  signals: ActivitySignals,
-  previousScore: number,
-  sensitivity: Sensitivity
-) => {
-  const reasons: string[] = [];
-  const sessionPressure = Math.min(signals.continuousUseMinutes * 1.55, 42);
-  const typingPressure = Math.min(signals.keypressesPerMinute / 2.5 + signals.typingBurstCount * 1.8, 20);
-  const mousePressure = Math.min(signals.mouseVelocity / 46, 14);
-  const scrollPressure = Math.min(signals.scrollVelocity / 30 + signals.scrollDepth / 11, 16);
-  const visibilityPressure = Math.min(signals.visibilityChanges * 1.8, 8);
-  const exertion = sessionPressure + typingPressure + mousePressure + scrollPressure + visibilityPressure;
-  const idleRecovery = signals.idleMs > 45_000 ? Math.min(signals.idleMs / 20_000, 16) : 0;
-  const score = clamp(previousScore * 0.72 + exertion * 0.28 - idleRecovery);
-
-  if (signals.continuousUseMinutes >= 25) reasons.push('Long continuous focus session');
-  if (signals.keypressesPerMinute > 70) reasons.push('Sustained typing intensity');
-  if (signals.mouseVelocity > 420) reasons.push('High pointer movement');
-  if (signals.scrollVelocity > 260) reasons.push('Rapid scrolling pattern');
-  if (signals.visibilityChanges >= 4) reasons.push('Frequent context switching');
-  if (idleRecovery > 4) reasons.push('Idle recovery detected');
-
-  return { score: Math.round(score), urgency: getUrgency(score, sensitivity), reasons };
-};
 
 const hasExtensionContext = () => {
   try {
@@ -361,7 +201,7 @@ const rollStats = (stats: ExtensionStats): ExtensionStats => {
   const recentWeek = Object.fromEntries(
     Object.entries(week)
       .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-6)
+      .slice(-365)
   ) as Record<string, UsageDay>;
 
   return {
@@ -813,8 +653,22 @@ const install = () => {
     }
   });
 
+  let pointerInitialized = false;
+  let cachedDocHeight = 0;
+  let lastDocHeightCheck = 0;
+  let lastSocialInteraction = category === 'social' ? Date.now() : 0;
+
   const onPointerMove = (event: PointerEvent) => {
     const now = Date.now();
+    if (category === 'social') lastSocialInteraction = now;
+    if (!pointerInitialized) {
+      lastPointer.x = event.clientX;
+      lastPointer.y = event.clientY;
+      lastPointer.time = now;
+      pointerInitialized = true;
+      markActive();
+      return;
+    }
     const distance = Math.hypot(event.clientX - lastPointer.x, event.clientY - lastPointer.y);
     const seconds = Math.max((now - lastPointer.time) / 1000, 0.016);
     signals.mouseVelocity = signals.mouseVelocity * 0.78 + (distance / seconds) * 0.22;
@@ -825,11 +679,13 @@ const install = () => {
   };
 
   const onClick = () => {
+    if (category === 'social') lastSocialInteraction = Date.now();
     markActive();
   };
 
   const onKeyDown = () => {
     const now = Date.now();
+    if (category === 'social') lastSocialInteraction = now;
     keyTimestamps = [...keyTimestamps, now].filter((timestamp) => now - timestamp < 60_000);
     const recentFiveSeconds = keyTimestamps.filter((timestamp) => now - timestamp < 5_000);
     if (recentFiveSeconds.length >= 12 && !burstStarted) {
@@ -842,11 +698,15 @@ const install = () => {
 
   const onScroll = () => {
     const now = Date.now();
+    if (category === 'social') lastSocialInteraction = now;
     const distance = Math.abs(window.scrollY - lastScroll.y);
     const seconds = Math.max((now - lastScroll.time) / 1000, 0.016);
-    const docHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, window.innerHeight);
+    if (now - lastDocHeightCheck > 2000 || cachedDocHeight === 0) {
+      cachedDocHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, window.innerHeight);
+      lastDocHeightCheck = now;
+    }
     signals.scrollVelocity = signals.scrollVelocity * 0.76 + (distance / seconds) * 0.24;
-    signals.scrollDepth = Math.max(signals.scrollDepth, Math.round((window.scrollY / docHeight) * 100));
+    signals.scrollDepth = Math.max(signals.scrollDepth, Math.round((window.scrollY / cachedDocHeight) * 100));
     lastScroll.y = window.scrollY;
     lastScroll.time = now;
     lastActivity = now;
@@ -899,13 +759,18 @@ const install = () => {
 
   window.setInterval(() => {
     void (async () => {
+      if (document.hidden) {
+        lastTickAt = Date.now();
+        return;
+      }
+
       currentSettings = await readStorage('xpauseSettings', defaultSettings);
       const now = Date.now();
-      const tickMs = document.hidden ? 0 : Math.max(0, now - lastTickAt);
+      const tickMs = Math.max(0, Math.min(now - lastTickAt, 10_000));
       lastTickAt = now;
       const idleMs = now - lastActivity;
       if (idleMs > 5 * 60_000) eyeStrainStartedAt = now;
-      const continuousUseMinutes = Math.max((now - sessionStart) / 60_000, currentSettings.sessionLengthMinutes - 25);
+      const continuousUseMinutes = (now - sessionStart) / 60_000;
       const nextSignals = {
         ...signals,
         idleMs,
@@ -923,8 +788,13 @@ const install = () => {
       stored.usage.today.scrollEvents += signals.scrollVelocity > 80 ? 1 : 0;
       const socialMinutes = stored.usage.today.categories.social / 60_000;
       const passiveRatio = stored.usage.today.screenMs > 0 ? stored.usage.today.passiveMs / stored.usage.today.screenMs : 0;
-      socialFatigueScore = Math.round(
-        clamp(socialMinutes * 1.45 + passiveRatio * 32 + Math.min(stored.usage.today.scrollEvents / 2, 20))
+      const minutesSinceSocialActive =
+        category === 'social' ? 0 : lastSocialInteraction === 0 ? 60 : Math.round((now - lastSocialInteraction) / 60_000);
+      socialFatigueScore = calculateSocialFatigue(
+        socialMinutes,
+        passiveRatio,
+        stored.usage.today.scrollEvents,
+        minutesSinceSocialActive
       );
       const eyeStrainMinutes = Math.floor((now - eyeStrainStartedAt) / 60_000);
       const insights = buildInsights(stored.usage.today, category, eyeStrainMinutes, socialFatigueScore);
@@ -967,6 +837,10 @@ const install = () => {
         activeUrgency = urgency;
         renderReminder('fatigue', urgency);
       }
+      signals.mouseVelocity = Math.max(0, signals.mouseVelocity * 0.35);
+      if (signals.mouseVelocity < 5) signals.mouseVelocity = 0;
+      signals.scrollVelocity = Math.max(0, signals.scrollVelocity * 0.35);
+      if (signals.scrollVelocity < 5) signals.scrollVelocity = 0;
       signals.typingBurstCount = Math.max(0, signals.typingBurstCount - 1);
       signals.visibilityChanges = Math.max(0, signals.visibilityChanges - 1);
     })();

@@ -14,7 +14,7 @@ Then load the extension:
 1. Open `chrome://extensions` or `edge://extensions`.
 2. Enable Developer mode.
 3. Choose "Load unpacked".
-4. Select `A:\XPause\dist-extension`.
+4. Select the `dist-extension` folder in this project directory.
 
 After rebuilding, click the reload icon on the extension card.
 

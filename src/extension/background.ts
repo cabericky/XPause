@@ -4,7 +4,7 @@ chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'XP_PAUSE_NOTIFY') {
     const notification = {
       type: 'basic',
-      iconUrl: chrome.runtime.getURL('icon.svg'),
+      iconUrl: chrome.runtime.getURL('logo.png'),
       title: 'XPause',
       message:
         'body' in message && typeof message.body === 'string'

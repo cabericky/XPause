@@ -1,17 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { decayFatigue, scoreActivity } from './fatigueScorer';
+import { calculateSocialFatigue, decayFatigue, emptySignals, scoreActivity } from './fatigueScorer';
 import type { ActivitySignals } from '../types';
 
-const baseSignals: ActivitySignals = {
-  mouseVelocity: 0,
-  idleMs: 0,
-  keypressesPerMinute: 0,
-  typingBurstCount: 0,
-  scrollVelocity: 0,
-  scrollDepth: 0,
-  visibilityChanges: 0,
-  continuousUseMinutes: 0
-};
+const baseSignals: ActivitySignals = emptySignals();
 
 describe('fatigueScorer', () => {
   it('raises score when multiple work intensity signals are present', () => {
@@ -41,5 +32,13 @@ describe('fatigueScorer', () => {
   it('uses lower thresholds for high sensitivity', () => {
     const result = scoreActivity({ ...baseSignals, continuousUseMinutes: 60 }, 52, 'high');
     expect(result.urgency).toBe('soft');
+  });
+
+  it('calculates social fatigue and decays after stepping away from social media', () => {
+    const activeSocialScore = calculateSocialFatigue(30, 0.6, 20, 0);
+    expect(activeSocialScore).toBeGreaterThanOrEqual(60);
+
+    const recoveredSocialScore = calculateSocialFatigue(30, 0.6, 20, 30);
+    expect(recoveredSocialScore).toBeLessThan(activeSocialScore);
   });
 });

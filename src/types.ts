@@ -3,6 +3,7 @@ export type BreakUrgency = 'none' | 'soft' | 'urgent' | 'critical';
 export type ExerciseId = 'blink' | 'wrist' | 'neck';
 export type SoundTheme = 'soft' | 'chime' | 'pulse' | 'custom';
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type ReminderKind = 'fatigue' | 'social';
 
 export interface ActivitySignals {
   mouseVelocity: number;
@@ -67,4 +68,50 @@ export interface Badge {
   title: string;
   description: string;
   unlocked: boolean;
+}
+
+export type UsageCategory = 'work' | 'entertainment' | 'social';
+
+export interface UsageDay {
+  date: string;
+  screenMs: number;
+  activeMs: number;
+  passiveMs: number;
+  categories: Record<UsageCategory, number>;
+  socialVisits: number;
+  scrollEvents: number;
+  disconnectPrompts: number;
+  eyeStrainPrompts: number;
+}
+
+export interface UsageAnalytics {
+  today: UsageDay;
+  week: Record<string, UsageDay>;
+}
+
+export interface InsightSnapshot {
+  socialFatigueScore: number;
+  eyeStrainMinutes: number;
+  category: UsageCategory;
+  passiveRatio: number;
+  schedule: string[];
+  disconnectSuggestion: string;
+  updatedAt: number;
+}
+
+export interface ExtensionStats {
+  xp: number;
+  completed: number;
+  partial: number;
+  skipped: number;
+  daily: DailyStats;
+  completedByExercise: Record<ExerciseId, number>;
+  usage: UsageAnalytics;
+}
+
+export interface ExtensionRuntime {
+  fatigueScore: number;
+  urgency: BreakUrgency;
+  reasons: string[];
+  updatedAt: number;
 }

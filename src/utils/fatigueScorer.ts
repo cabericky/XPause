@@ -6,7 +6,18 @@ const sensitivityThresholds: Record<Sensitivity, { soft: number; urgent: number;
   high: { soft: 48, urgent: 76, critical: 90 }
 };
 
-const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+export const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+
+export const emptySignals = (): ActivitySignals => ({
+  mouseVelocity: 0,
+  idleMs: 0,
+  keypressesPerMinute: 0,
+  typingBurstCount: 0,
+  scrollVelocity: 0,
+  scrollDepth: 0,
+  visibilityChanges: 0,
+  continuousUseMinutes: 0
+});
 
 export const getUrgency = (score: number, sensitivity: Sensitivity): BreakUrgency => {
   const thresholds = sensitivityThresholds[sensitivity];
@@ -52,4 +63,15 @@ export const scoreActivity = (
 export const decayFatigue = (score: number, idleMs: number): number => {
   if (idleMs < 30_000) return score;
   return Math.round(clamp(score - Math.min(idleMs / 12_000, 24)));
+};
+
+export const calculateSocialFatigue = (
+  socialMinutes: number,
+  passiveRatio: number,
+  scrollEvents: number,
+  minutesSinceSocialActive = 0
+): number => {
+  const base = socialMinutes * 1.45 + passiveRatio * 32 + Math.min(scrollEvents / 2, 20);
+  const recovery = minutesSinceSocialActive > 5 ? (minutesSinceSocialActive - 5) * 2 : 0;
+  return Math.round(clamp(base - recovery));
 };

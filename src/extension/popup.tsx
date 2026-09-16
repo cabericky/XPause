@@ -25,61 +25,20 @@ import {
 import { exercises } from '../data/exercises';
 import logoUrl from '../assets/logo.png';
 import type {
-  BreakUrgency,
   DailyStats,
   ExerciseId,
+  ExtensionRuntime,
+  ExtensionStats,
+  InsightSnapshot,
   Settings as XPauseSettings,
   SoundTheme,
-  ThemeMode
+  ThemeMode,
+  UsageCategory,
+  UsageDay
 } from '../types';
 import './popup.css';
 
-type UsageCategory = 'work' | 'entertainment' | 'social';
 type UsageRange = 'weekly' | 'monthly' | 'yearly';
-
-interface ExtensionRuntime {
-  fatigueScore: number;
-  urgency: BreakUrgency;
-  reasons: string[];
-  updatedAt: number;
-}
-
-interface ExtensionStats {
-  xp: number;
-  completed: number;
-  partial: number;
-  skipped: number;
-  daily: DailyStats;
-  completedByExercise: Record<ExerciseId, number>;
-  usage: UsageAnalytics;
-}
-
-interface UsageDay {
-  date: string;
-  screenMs: number;
-  activeMs: number;
-  passiveMs: number;
-  categories: Record<UsageCategory, number>;
-  socialVisits: number;
-  scrollEvents: number;
-  disconnectPrompts: number;
-  eyeStrainPrompts: number;
-}
-
-interface UsageAnalytics {
-  today: UsageDay;
-  week: Record<string, UsageDay>;
-}
-
-interface InsightSnapshot {
-  socialFatigueScore: number;
-  eyeStrainMinutes: number;
-  category: UsageCategory;
-  passiveRatio: number;
-  schedule: string[];
-  disconnectSuggestion: string;
-  updatedAt: number;
-}
 
 const defaultSettings: XPauseSettings = {
   sessionLengthMinutes: 25,
@@ -422,6 +381,10 @@ const Popup = () => {
 
   const uploadCustomSound = (file: File) => {
     if (!file.type.startsWith('audio/')) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Audio file size must be under 2MB.');
+      return;
+    }
     const reader = new FileReader();
     reader.addEventListener('load', () => {
       const dataUrl = typeof reader.result === 'string' ? reader.result : '';
@@ -453,7 +416,9 @@ const Popup = () => {
       if (tab.id) {
         await chrome.tabs
           .sendMessage(tab.id, { type: 'XP_PAUSE_START_BREAK', settings })
-          .catch(() => undefined);
+          .catch(() => {
+            alert('Cannot start break on browser system pages (e.g. chrome:// or edge://). Please switch to a regular website tab.');
+          });
       }
     } catch {
       // Ignore invalidated extension contexts from an old popup.
