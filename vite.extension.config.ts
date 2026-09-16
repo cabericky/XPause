@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { defineConfig } from 'vite';
+import { build, defineConfig } from 'vite';
 
 const extensionLogoPath = 'logo.png';
 
@@ -75,8 +75,31 @@ const writeManifest = () => ({
   }
 });
 
+const buildContentScript = () => ({
+  name: 'build-content-script',
+  async closeBundle() {
+    await build({
+      configFile: false,
+      publicDir: false,
+      build: {
+        emptyOutDir: false,
+        outDir: 'dist-extension',
+        sourcemap: true,
+        rollupOptions: {
+          input: resolve(__dirname, 'src/extension/contentScript.ts'),
+          output: {
+            format: 'iife',
+            name: 'XPauseContentScript',
+            entryFileNames: 'assets/contentScript.js'
+          }
+        }
+      }
+    });
+  }
+});
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), writeManifest()],
+  plugins: [react(), tailwindcss(), writeManifest(), buildContentScript()],
   publicDir: false,
   build: {
     outDir: 'dist-extension',
@@ -85,7 +108,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'extension/popup.html'),
-        contentScript: resolve(__dirname, 'src/extension/contentScript.ts'),
         background: resolve(__dirname, 'src/extension/background.ts')
       },
       output: {
