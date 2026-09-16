@@ -67,7 +67,7 @@ const themeModes: Array<{ id: ThemeMode; label: string; icon: React.ComponentTyp
   { id: 'system', label: 'System', icon: Laptop }
 ];
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Date().toLocaleDateString('en-CA');
 
 const emptyDaily = (): DailyStats => ({
   date: today(),
@@ -265,15 +265,16 @@ const Popup = () => {
   const [usageRange, setUsageRange] = useState<UsageRange>('weekly');
   const level = Math.floor(stats.xp / 500) + 1;
   const xpProgress = stats.xp % 500;
-  const weeklyScreenMs =
-    Object.values(stats.usage.week).reduce((total, day) => total + day.screenMs, 0) +
-    stats.usage.today.screenMs;
   const usageDays = useMemo(
     () =>
       [...Object.values(stats.usage.week), stats.usage.today]
         .filter((day) => day.date)
         .sort((a, b) => a.date.localeCompare(b.date)),
     [stats.usage.today, stats.usage.week]
+  );
+  const weeklyScreenMs = useMemo(
+    () => usageDays.slice(-7).reduce((total, day) => total + day.screenMs, 0),
+    [usageDays]
   );
   const usageChart = useMemo(() => {
     const baseDays = [...usageDays];

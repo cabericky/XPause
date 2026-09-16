@@ -1,4 +1,3 @@
-import { exercises } from '../data/exercises';
 import type {
   BreakUrgency,
   ExerciseDefinition,
@@ -34,7 +33,49 @@ const defaultSettings: ExtensionSettings = {
   dailyBreakGoal: 4
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const exercises: ExerciseDefinition[] = [
+  {
+    id: 'blink',
+    title: 'Blink Exercise',
+    shortLabel: 'Eyes',
+    duration: 60,
+    xp: 100,
+    accent: '#7EC8A4',
+    steps: [
+      { label: 'Look 20 feet away', duration: 20, cue: 'Relax your gaze into the distance.' },
+      { label: 'Slow blink set', duration: 20, cue: 'Close, release, and reopen your eyes.' },
+      { label: 'Soft focus reset', duration: 20, cue: 'Let your eyes rest before returning.' }
+    ]
+  },
+  {
+    id: 'wrist',
+    title: 'Wrist Stretch',
+    shortLabel: 'Wrists',
+    duration: 75,
+    xp: 100,
+    accent: '#8FBFE0',
+    steps: [
+      { label: 'Gentle rotations', duration: 25, cue: 'Circle both wrists slowly.' },
+      { label: 'Palm flex', duration: 25, cue: 'Press fingers back with an easy stretch.' },
+      { label: 'Release shakeout', duration: 25, cue: 'Shake the hands loose.' }
+    ]
+  },
+  {
+    id: 'neck',
+    title: 'Neck Rotation',
+    shortLabel: 'Neck',
+    duration: 90,
+    xp: 100,
+    accent: '#E8C77D',
+    steps: [
+      { label: 'Turn left and hold', duration: 30, cue: 'Keep shoulders low and jaw relaxed.' },
+      { label: 'Turn right and hold', duration: 30, cue: 'Move slowly through the center.' },
+      { label: 'Forward release', duration: 30, cue: 'Drop chin gently and breathe.' }
+    ]
+  }
+];
+
+const today = () => new Date().toLocaleDateString('en-CA');
 
 const emptyDaily = () => ({
   date: today(),
@@ -392,7 +433,7 @@ const install = () => {
   style.textContent = createStyles();
   const mount = document.createElement('div');
   shadow.append(style, mount);
-  document.documentElement.append(host);
+  (document.body || document.documentElement).append(host);
 
   let fatigueScore = 0;
   let socialFatigueScore = 0;
@@ -491,6 +532,8 @@ const install = () => {
       }
     };
     fatigueScore = Math.max(0, fatigueScore - (partial ? 28 : 55));
+    sessionStart = Date.now();
+    eyeStrainStartedAt = Date.now();
     await setStorage({ xpauseStats: nextStats });
     await saveRuntime(fatigueScore, 'none', ['Break completed']);
   };
@@ -560,8 +603,28 @@ const install = () => {
     const remaining = Math.max(0, activeExercise.duration - exerciseElapsed);
     const progress = Math.min(100, (exerciseElapsed / activeExercise.duration) * 100);
     const themeClass = `xp-theme-${resolveTheme(currentSettings.themeMode)}`;
+
+    const existingPanel = mount.querySelector('.xp-panel');
+    if (existingPanel && existingPanel.getAttribute('data-exercise-id') === activeExercise.id) {
+      const ring = existingPanel.querySelector('.xp-ring') as HTMLElement | null;
+      if (ring) {
+        ring.style.setProperty('--progress', `${progress}%`);
+        const strong = ring.querySelector('strong');
+        if (strong) strong.textContent = remaining.toString();
+      }
+      const copyH3 = existingPanel.querySelector('.xp-copy h3');
+      if (copyH3) copyH3.textContent = step.label;
+      const copyP = existingPanel.querySelector('.xp-copy p');
+      if (copyP) copyP.textContent = step.cue;
+      const dots = existingPanel.querySelectorAll('.xp-dots span');
+      dots.forEach((dot, index) => {
+        dot.className = index <= stepIndex ? 'active' : '';
+      });
+      return;
+    }
+
     mount.innerHTML = `
-      <aside class="xp-panel ${themeClass} ${urgency}" role="dialog" aria-modal="${urgency === 'critical'}" aria-labelledby="xpause-title">
+      <aside class="xp-panel ${themeClass} ${urgency}" data-exercise-id="${activeExercise.id}" role="dialog" aria-modal="${urgency === 'critical'}" aria-labelledby="xpause-title">
         <div class="xp-top">
           <div>
             <p class="xp-eyebrow">${urgency === 'critical' ? 'Critical reset' : 'XPause micro-break'}</p>
@@ -633,11 +696,17 @@ const install = () => {
         snoozedUntil = Date.now() + 10 * 60_000;
         closeReminder();
       }
-      if (action === 'reminder-dismiss') closeReminder();
+      if (action === 'reminder-dismiss') {
+        void saveMiss('skipped');
+        closeReminder();
+      }
       return;
     }
     if (!activeExercise) return;
-    if (action === 'close') closePanel();
+    if (action === 'close') {
+      void saveMiss('skipped');
+      closePanel();
+    }
     if (action === 'done') {
       void saveCompletion(activeExercise, exerciseElapsed < activeExercise.duration * 0.75);
       closePanel();
