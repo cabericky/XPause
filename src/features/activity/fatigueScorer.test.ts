@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { calculateSocialFatigue, decayFatigue, emptySignals, scoreActivity } from './fatigueScorer';
-import type { ActivitySignals } from '../types';
+import type { ActivitySignals } from '../../types';
 
 const baseSignals: ActivitySignals = emptySignals();
 
@@ -42,3 +42,4 @@ describe('fatigueScorer', () => {
     expect(recoveredSocialScore).toBeLessThan(activeSocialScore);
   });
 });
+

@@ -41,11 +41,16 @@ npm.cmd run lint
 
 ## Architecture
 
-- `src/extension/contentScript.ts` runs on normal `http` and `https` pages, monitors activity, stores analytics in `chrome.storage.local`, and injects the break overlay.
-- `src/extension/popup.tsx` renders the extension dashboard, settings, social fatigue, category splits, eye-strain timer, and schedule suggestions.
-- `src/extension/background.ts` handles extension notifications.
-- `vite.extension.config.ts` builds the Manifest V3 unpacked extension.
-- `src/utils/fatigueScorer.ts` contains the tested fatigue scoring logic used by the shared model.
+- `src/features/activity`: User telemetry (`ActivityTracker`), site categorizer (`classifyHost`), and fatigue scoring (`scoreActivity`, `decayFatigue`).
+- `src/features/analytics`: Screen usage statistics rollup (`rollStats`, `mergeStats`), AI insight generator (`buildInsights`), and charts.
+- `src/features/breaks`: Exercise definitions, in-page break overlay manager, shadow DOM host, and exercise timers.
+- `src/features/dashboard`: Extension popup dashboard widgets (header, status strip, score cards, XP stats, badges).
+- `src/features/settings`: User configuration controls (sensitivity, exercise toggles, theme switcher).
+- `src/features/sound`: Web Audio API sound synthesizer and sound theme manager.
+- `src/features/privacy`: On-device privacy policy layout.
+- `src/shared/`: Shared storage wrapper, date helpers, formatters, and theme resolvers.
+- `src/extension/`: Thin extension entry points (`contentScript.ts`, `popup.tsx`, `background.ts`).
+- `vite.extension.config.ts`: Builds the Manifest V3 unpacked extension.
 
 ## Privacy
 

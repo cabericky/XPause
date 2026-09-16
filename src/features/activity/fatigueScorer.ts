@@ -1,4 +1,4 @@
-import type { ActivitySignals, BreakUrgency, FatigueResult, Sensitivity } from '../types';
+import type { ActivitySignals, BreakUrgency, FatigueResult, Sensitivity } from '../../types';
 
 const sensitivityThresholds: Record<Sensitivity, { soft: number; urgent: number; critical: number }> = {
   low: { soft: 70, urgent: 90, critical: 96 },
@@ -6,7 +6,8 @@ const sensitivityThresholds: Record<Sensitivity, { soft: number; urgent: number;
   high: { soft: 48, urgent: 76, critical: 90 }
 };
 
-export const clamp = (value: number, min = 0, max = 100) => Math.min(max, Math.max(min, value));
+export const clamp = (value: number, min = 0, max = 100): number =>
+  Math.min(max, Math.max(min, value));
 
 export const emptySignals = (): ActivitySignals => ({
   mouseVelocity: 0,
@@ -34,7 +35,10 @@ export const scoreActivity = (
 ): FatigueResult => {
   const reasons: string[] = [];
   const sessionPressure = Math.min(signals.continuousUseMinutes * 1.55, 42);
-  const typingPressure = Math.min(signals.keypressesPerMinute / 2.5 + signals.typingBurstCount * 1.8, 20);
+  const typingPressure = Math.min(
+    signals.keypressesPerMinute / 2.5 + signals.typingBurstCount * 1.8,
+    20
+  );
   const mousePressure = Math.min(signals.mouseVelocity / 46, 14);
   const scrollPressure = Math.min(signals.scrollVelocity / 30 + signals.scrollDepth / 11, 16);
   const visibilityPressure = Math.min(signals.visibilityChanges * 1.8, 8);
@@ -75,3 +79,4 @@ export const calculateSocialFatigue = (
   const recovery = minutesSinceSocialActive > 5 ? (minutesSinceSocialActive - 5) * 2 : 0;
   return Math.round(clamp(base - recovery));
 };
+

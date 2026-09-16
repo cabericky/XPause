@@ -1,4 +1,4 @@
-import type { ExerciseDefinition } from '../types';
+import type { ExerciseDefinition } from '../../types';
 
 export const exercises: ExerciseDefinition[] = [
   {
@@ -42,4 +42,6 @@ export const exercises: ExerciseDefinition[] = [
   }
 ];
 
-export const getExerciseById = (id: string) => exercises.find((exercise) => exercise.id === id);
+export const getExerciseById = (id: string): ExerciseDefinition | undefined =>
+  exercises.find((exercise) => exercise.id === id);
+

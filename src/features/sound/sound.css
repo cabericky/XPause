@@ -1,0 +1,98 @@
+.sound-panel {
+  display: grid;
+  gap: 9px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.sound-panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sound-panel-title span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.sound-panel-title button {
+  min-height: 30px;
+  border: 1px solid rgba(2, 132, 199, 0.42);
+  border-radius: 8px;
+  background: #e7f6fe;
+  color: #0369a1;
+  padding: 0 10px;
+  font-size: 0.76rem;
+}
+
+.sound-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.sound-options button {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  border: 1px solid #dbe4ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+  padding: 9px;
+  text-align: left;
+}
+
+.sound-options button.active {
+  border-color: rgba(22, 163, 74, 0.66);
+  background: #ecfdf3;
+}
+
+.sound-options strong {
+  font-size: 0.82rem;
+}
+
+.sound-options span {
+  color: #64748b;
+  font-size: 0.68rem;
+  line-height: 1.28;
+}
+
+.upload-sound {
+  position: relative;
+  min-height: 40px;
+  border: 1px dashed #94a3b8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  place-items: center;
+  padding: 9px;
+  text-align: center;
+}
+
+.upload-sound input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.custom-sound {
+  min-height: 36px;
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.custom-sound.active {
+  border-color: rgba(22, 163, 74, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(22, 163, 74, 0.28);
+}
+

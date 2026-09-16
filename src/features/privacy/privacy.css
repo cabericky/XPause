@@ -1,0 +1,35 @@
+.privacy-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  border: 1px solid rgba(2, 132, 199, 0.42);
+  border-radius: 8px;
+  background: #e7f6fe;
+  color: #0369a1;
+  font-weight: 800;
+}
+
+.privacy-shell {
+  gap: 12px;
+}
+
+.privacy-brand {
+  flex: 1;
+}
+
+.privacy-panel p,
+.privacy-list {
+  margin: 0;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.48;
+}
+
+.privacy-list {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+}
+

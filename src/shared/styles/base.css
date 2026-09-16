@@ -1,0 +1,150 @@
+:root {
+  color: #172033;
+  background: #f6f8fb;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 410px;
+  min-height: 620px;
+  max-height: 740px;
+  margin: 0;
+  overflow: auto;
+  background: #f6f8fb;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.popup-shell {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.panel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: none;
+  padding: 12px;
+}
+
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #172033;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.panel h2 svg {
+  color: #0284c7;
+}
+
+.meter {
+  overflow: hidden;
+  height: 9px;
+  margin: 10px 0;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.meter.small {
+  height: 7px;
+  margin: 0;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #16a34a, #0284c7);
+}
+
+.segments,
+.checks {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.segments button,
+.checks label,
+.custom-sound {
+  min-height: 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172033;
+}
+
+.segments button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  text-transform: capitalize;
+}
+
+.segments button.active,
+.checks label:has(input:checked) {
+  border-color: rgba(2, 132, 199, 0.56);
+  background: #e7f6fe;
+}
+
+.icon-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  border: 0;
+  background: #0284c7;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.secondary-icon {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #172033;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #475569;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 380px) {
+  body {
+    width: 360px;
+  }
+}
+
