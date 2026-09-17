@@ -35,7 +35,8 @@ const extensionManifest = {
     service_worker: 'assets/background.js',
     type: 'module',
   },
-  permissions: ['storage', 'notifications', 'activeTab'],
+  permissions: ['storage', 'notifications', 'activeTab', 'scripting'],
+  host_permissions: ['http://*/*', 'https://*/*'],
   content_scripts: [
     {
       matches: ['http://*/*', 'https://*/*'],

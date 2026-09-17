@@ -54,8 +54,23 @@ const saveRuntime = async (
 
 const install = (): void => {
   if (typeof window === 'undefined') return;
-  const xpauseWindow = window as unknown as { __xpauseInstalled?: boolean };
-  if (xpauseWindow.__xpauseInstalled) return;
+  const xpauseWindow = window as unknown as {
+    __xpauseInstalled?: boolean;
+    __xpauseCleanup?: () => void;
+  };
+
+  if (xpauseWindow.__xpauseInstalled && hasExtensionContext()) {
+    return;
+  }
+
+  if (xpauseWindow.__xpauseCleanup) {
+    try {
+      xpauseWindow.__xpauseCleanup();
+    } catch {
+      // Ignore previous cleanup failure
+    }
+  }
+
   xpauseWindow.__xpauseInstalled = true;
 
   const hostElements = initOverlayHost();
@@ -101,14 +116,15 @@ const install = (): void => {
     }
   };
 
-  document.addEventListener('visibilitychange', () => {
+  const onVisibilityChange = (): void => {
     if (!document.hidden) {
       void syncFromStorage();
       lastTickAt = Date.now();
     }
-  });
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
-  subscribeStorage((changes) => {
+  const unsubscribeStorage = subscribeStorage((changes) => {
     if (changes.xpauseSettings?.newValue) {
       currentSettings = {
         ...defaultSettings,
@@ -180,7 +196,7 @@ const install = (): void => {
     })();
   }
 
-  chrome.runtime.onMessage.addListener((message) => {
+  const onMessage = (message: unknown): void => {
     if (!message || typeof message !== 'object' || !('type' in message)) return;
 
     const typedMessage = message as ExtensionMessage;
@@ -200,14 +216,36 @@ const install = (): void => {
         });
       }
     }
-  });
+  };
 
-  const intervalId = window.setInterval(() => {
+  chrome.runtime.onMessage.addListener(onMessage);
+
+  let intervalId: number | undefined;
+
+  const cleanup = (): void => {
+    if (typeof intervalId === 'number') {
+      window.clearInterval(intervalId);
+      intervalId = undefined;
+    }
+    tracker.destroy();
+    overlayManager.destroy();
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    unsubscribeStorage();
+    try {
+      chrome.runtime.onMessage.removeListener?.(onMessage as unknown as () => void);
+    } catch {
+      // Ignore invalidated extension context
+    }
+    delete xpauseWindow.__xpauseInstalled;
+    delete xpauseWindow.__xpauseCleanup;
+  };
+
+  xpauseWindow.__xpauseCleanup = cleanup;
+
+  intervalId = window.setInterval(() => {
     void (async () => {
       if (!hasExtensionContext()) {
-        window.clearInterval(intervalId);
-        tracker.destroy();
-        overlayManager.destroy();
+        cleanup();
         return;
       }
 

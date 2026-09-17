@@ -21,6 +21,8 @@ const Popup = () => {
     runtime,
     insights,
     privacyOpen,
+    systemNotice,
+    dismissNotice,
     saveSettings,
     startBreak,
     openPrivacy,
@@ -34,6 +36,14 @@ const Popup = () => {
   return (
     <main className="popup-shell">
       <AppHeader onStartBreak={startBreak} />
+      {systemNotice && (
+        <aside className="system-notice-banner" role="alert">
+          <span>{systemNotice}</span>
+          <button type="button" onClick={dismissNotice} aria-label="Dismiss notice">
+            ×
+          </button>
+        </aside>
+      )}
       <StatusStrip urgency={runtime.urgency} category={insights.category} />
       <ScoreGrid
         fatigueScore={runtime.fatigueScore}

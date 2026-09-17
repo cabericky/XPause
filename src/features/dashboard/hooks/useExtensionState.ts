@@ -65,6 +65,8 @@ export const useExtensionState = () => {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [systemPrefersDark, setSystemPrefersDark] = useState(false);
 
+  const [systemNotice, setSystemNotice] = useState<string | null>(null);
+
   const resolvedTheme = resolveTheme(settings.themeMode, systemPrefersDark);
 
   useEffect(() => {
@@ -141,12 +143,43 @@ export const useExtensionState = () => {
 
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id) {
-        await sendTabStartBreak(tab.id, settings).catch(() => {
-          console.warn(
-            'Cannot start break on browser system pages (e.g. chrome:// or edge://). Please switch to a regular website tab.',
-          );
-        });
+      if (!tab || typeof tab.id !== 'number') return;
+
+      const isHttp = tab.url
+        ? tab.url.startsWith('http://') || tab.url.startsWith('https://')
+        : true;
+
+      if (!isHttp) {
+        setSystemNotice(
+          'Micro-breaks cannot run on browser system pages. Please switch to a regular website.',
+        );
+        return;
+      }
+
+      setSystemNotice(null);
+
+      try {
+        await sendTabStartBreak(tab.id, settings);
+      } catch {
+        // Tab may not have content script injected yet (e.g. pre-existing tab).
+        // Attempt dynamic injection and retry:
+        if (chrome.scripting?.executeScript) {
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              files: ['assets/contentScript.js'],
+            });
+            await sendTabStartBreak(tab.id, settings);
+            setSystemNotice(null);
+            return;
+          } catch {
+            // Scripting injection failed
+          }
+        }
+
+        setSystemNotice(
+          'Cannot start break on this page. Please switch to a regular website tab.',
+        );
       }
     } catch {
       // Ignore invalidated extension context
@@ -160,6 +193,8 @@ export const useExtensionState = () => {
     insights,
     privacyOpen,
     resolvedTheme,
+    systemNotice,
+    dismissNotice: () => setSystemNotice(null),
     saveSettings,
     startBreak,
     openPrivacy: () => setPrivacyOpen(true),
