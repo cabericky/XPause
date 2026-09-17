@@ -5,19 +5,21 @@ import { resolve } from 'node:path';
 import { build, defineConfig } from 'vite';
 
 const extensionLogoPath = 'logo.png';
+const extensionName = 'XPause - Micro-Break Recommender';
+const extensionDescription = 'Local fatigue-aware micro-break reminders across browser tabs.';
 
 const extensionManifest = {
   manifest_version: 3,
-  name: 'XPause - Micro-Break Recommender',
+  name: '__MSG_appName__',
   short_name: 'XPause',
   version: '0.1.0',
-  description: 'Local fatigue-aware micro-break reminders across browser tabs.',
+  description: '__MSG_appDescription__',
   default_locale: 'en',
   icons: {
     16: extensionLogoPath,
     32: extensionLogoPath,
     48: extensionLogoPath,
-    128: extensionLogoPath
+    128: extensionLogoPath,
   },
   action: {
     default_title: 'XPause',
@@ -26,27 +28,27 @@ const extensionManifest = {
       16: extensionLogoPath,
       32: extensionLogoPath,
       48: extensionLogoPath,
-      128: extensionLogoPath
-    }
+      128: extensionLogoPath,
+    },
   },
   background: {
     service_worker: 'assets/background.js',
-    type: 'module'
+    type: 'module',
   },
   permissions: ['storage', 'notifications', 'activeTab'],
   content_scripts: [
     {
       matches: ['http://*/*', 'https://*/*'],
       js: ['assets/contentScript.js'],
-      run_at: 'document_idle'
-    }
+      run_at: 'document_idle',
+    },
   ],
   web_accessible_resources: [
     {
       resources: ['assets/exercises/*'],
-      matches: ['http://*/*', 'https://*/*']
-    }
-  ]
+      matches: ['http://*/*', 'https://*/*'],
+    },
+  ],
 };
 
 const writeManifest = () => ({
@@ -54,7 +56,10 @@ const writeManifest = () => ({
   closeBundle() {
     mkdirSync('dist-extension', { recursive: true });
     mkdirSync(resolve('dist-extension', '_locales', 'en'), { recursive: true });
-    copyFileSync(resolve('src', 'assets', 'logo.png'), resolve('dist-extension', extensionLogoPath));
+    copyFileSync(
+      resolve('src', 'assets', 'logo.png'),
+      resolve('dist-extension', extensionLogoPath),
+    );
 
     const exercisesSrc = resolve('src', 'assets', 'exercises');
     const exercisesDist = resolve('dist-extension', 'assets', 'exercises');
@@ -65,28 +70,28 @@ const writeManifest = () => ({
 
     writeFileSync(
       resolve('dist-extension', 'manifest.json'),
-      `${JSON.stringify(extensionManifest, null, 2)}\n`
+      `${JSON.stringify(extensionManifest, null, 2)}\n`,
     );
     writeFileSync(
       resolve('dist-extension', '_locales', 'en', 'messages.json'),
       `${JSON.stringify(
         {
           appName: {
-            message: extensionManifest.name
+            message: extensionName,
           },
           appDescription: {
-            message: extensionManifest.description
-          }
+            message: extensionDescription,
+          },
         },
         null,
-        2
-      )}\n`
+        2,
+      )}\n`,
     );
     writeFileSync(
       resolve('dist-extension', 'icon.svg'),
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0D1B2A"/><circle cx="64" cy="64" r="38" fill="#14263A" stroke="#7EC8A4" stroke-width="6"/><path d="M45 42h12v44H45zM71 42h12v44H71z" fill="#F0EDE6"/><path d="M42 94c15 11 29 11 44 0" fill="none" stroke="#7EC8A4" stroke-width="7" stroke-linecap="round"/></svg>\n`
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0D1B2A"/><circle cx="64" cy="64" r="38" fill="#14263A" stroke="#7EC8A4" stroke-width="6"/><path d="M45 42h12v44H45zM71 42h12v44H71z" fill="#F0EDE6"/><path d="M42 94c15 11 29 11 44 0" fill="none" stroke="#7EC8A4" stroke-width="7" stroke-linecap="round"/></svg>\n`,
     );
-  }
+  },
 });
 
 const buildContentScript = () => ({
@@ -104,12 +109,12 @@ const buildContentScript = () => ({
           output: {
             format: 'iife',
             name: 'XPauseContentScript',
-            entryFileNames: 'assets/contentScript.js'
-          }
-        }
-      }
+            entryFileNames: 'assets/contentScript.js',
+          },
+        },
+      },
     });
-  }
+  },
 });
 
 export default defineConfig({
@@ -122,13 +127,13 @@ export default defineConfig({
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'extension/popup.html'),
-        background: resolve(__dirname, 'src/extension/background.ts')
+        background: resolve(__dirname, 'src/extension/background.ts'),
       },
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]'
-      }
-    }
-  }
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      },
+    },
+  },
 });

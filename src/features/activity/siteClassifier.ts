@@ -10,7 +10,9 @@ export const socialHosts: readonly string[] = [
   'linkedin.com',
   'threads.net',
   'snapchat.com',
-  'pinterest.com'
+  'pinterest.com',
+  'discord.com',
+  'whatsapp.com',
 ];
 
 export const entertainmentHosts: readonly string[] = [
@@ -21,7 +23,7 @@ export const entertainmentHosts: readonly string[] = [
   'hulu.com',
   'disneyplus.com',
   'primevideo.com',
-  'soundcloud.com'
+  'soundcloud.com',
 ];
 
 export const workHosts: readonly string[] = [
@@ -35,11 +37,11 @@ export const workHosts: readonly string[] = [
   'figma.com',
   'linear.app',
   'jira.com',
-  'atlassian.net'
+  'atlassian.net',
 ];
 
 export const classifyHost = (host: string): UsageCategory => {
-  const normalized = host.replace(/^www\./, '');
+  const normalized = host.replace(/^www\./i, '').toLowerCase();
   if (socialHosts.some((item) => normalized === item || normalized.endsWith(`.${item}`))) {
     return 'social';
   }
@@ -51,4 +53,3 @@ export const classifyHost = (host: string): UsageCategory => {
   }
   return 'work';
 };
-

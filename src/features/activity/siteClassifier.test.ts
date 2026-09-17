@@ -2,15 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { classifyHost } from './siteClassifier';
 
 describe('siteClassifier', () => {
-  it('classifies social platforms correctly', () => {
+  it('classifies social platforms correctly and case-insensitively', () => {
     expect(classifyHost('x.com')).toBe('social');
     expect(classifyHost('www.instagram.com')).toBe('social');
     expect(classifyHost('old.reddit.com')).toBe('social');
     expect(classifyHost('tiktok.com')).toBe('social');
+    expect(classifyHost('discord.com')).toBe('social');
+    expect(classifyHost('web.whatsapp.com')).toBe('social');
+    expect(classifyHost('WWW.TIKTOK.COM')).toBe('social');
   });
 
   it('classifies entertainment platforms correctly', () => {
     expect(classifyHost('youtube.com')).toBe('entertainment');
+    expect(classifyHost('YouTube.com')).toBe('entertainment');
     expect(classifyHost('www.netflix.com')).toBe('entertainment');
     expect(classifyHost('open.spotify.com')).toBe('entertainment');
     expect(classifyHost('twitch.tv')).toBe('entertainment');
@@ -18,6 +22,7 @@ describe('siteClassifier', () => {
 
   it('classifies work platforms correctly', () => {
     expect(classifyHost('github.com')).toBe('work');
+    expect(classifyHost('GitHub.com')).toBe('work');
     expect(classifyHost('docs.google.com')).toBe('work');
     expect(classifyHost('app.slack.com')).toBe('work');
     expect(classifyHost('notion.so')).toBe('work');
@@ -28,4 +33,3 @@ describe('siteClassifier', () => {
     expect(classifyHost('localhost')).toBe('work');
   });
 });
-

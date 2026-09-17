@@ -9,29 +9,22 @@ export type ExtensionMessage =
 export const sendNotificationMessage = (body: string): void => {
   sendRuntimeMessage({
     type: 'XP_PAUSE_NOTIFY',
-    body
+    body,
   });
 };
 
-export const sendTabStartBreak = async (
-  tabId: number,
-  settings: Settings
-): Promise<void> => {
+export const sendTabStartBreak = async (tabId: number, settings: Settings): Promise<void> => {
   if (!hasExtensionContext()) return;
   await chrome.tabs.sendMessage(tabId, {
     type: 'XP_PAUSE_START_BREAK',
-    settings
+    settings,
   });
 };
 
-export const sendTabSettingsUpdated = async (
-  tabId: number,
-  settings: Settings
-): Promise<void> => {
+export const sendTabSettingsUpdated = async (tabId: number, settings: Settings): Promise<void> => {
   if (!hasExtensionContext()) return;
   await chrome.tabs.sendMessage(tabId, {
     type: 'XP_PAUSE_SETTINGS_UPDATED',
-    settings
+    settings,
   });
 };
-

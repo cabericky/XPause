@@ -15,7 +15,7 @@ interface SettingsPanelProps {
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   settings,
   onSaveSettings,
-  onOpenPrivacy
+  onOpenPrivacy,
 }) => {
   return (
     <section className="panel">
@@ -31,11 +31,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
       <div className="settings-section">
         <h3>Privacy</h3>
-        <button
-          type="button"
-          className="privacy-link-button"
-          onClick={onOpenPrivacy}
-        >
+        <button type="button" className="privacy-link-button" onClick={onOpenPrivacy}>
           <FileText size={15} />
           View privacy policy
         </button>
@@ -43,4 +39,3 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     </section>
   );
 };
-

@@ -15,18 +15,24 @@ const ranges: UsageRange[] = ['weekly', 'monthly', 'yearly'];
 export const UsageAnalyticsPanel: React.FC<UsageAnalyticsPanelProps> = ({ stats }) => {
   const [usageRange, setUsageRange] = useState<UsageRange>('weekly');
 
-  const usageDays = useMemo(
-    () =>
-      [...Object.values(stats.usage.week), stats.usage.today]
-        .filter((day) => day.date)
-        .sort((a, b) => a.date.localeCompare(b.date)),
-    [stats.usage.today, stats.usage.week]
-  );
+  const usageDays = useMemo(() => {
+    const todayDate = stats.usage.today.date;
+    const weekDays = Object.values(stats.usage.week).filter(
+      (day) => day.date && day.date !== todayDate,
+    );
+    return [...weekDays, stats.usage.today]
+      .filter((day) => day.date)
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [stats.usage.today, stats.usage.week]);
 
-  const weeklyScreenMs = useMemo(
-    () => usageDays.slice(-7).reduce((total, day) => total + day.screenMs, 0),
-    [usageDays]
-  );
+  const weeklyScreenMs = useMemo(() => {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 6);
+    const cutoff = cutoffDate.toLocaleDateString('en-CA');
+    return usageDays
+      .filter((day) => day.date >= cutoff)
+      .reduce((total, day) => total + day.screenMs, 0);
+  }, [usageDays]);
 
   const totalTodayMs = Math.max(1, stats.usage.today.screenMs);
 
@@ -79,7 +85,7 @@ export const UsageAnalyticsPanel: React.FC<UsageAnalyticsPanelProps> = ({ stats 
             <div className="meter small">
               <span
                 style={{
-                  width: `${(stats.usage.today.categories[category] / totalTodayMs) * 100}%`
+                  width: `${(stats.usage.today.categories[category] / totalTodayMs) * 100}%`,
                 }}
               />
             </div>
@@ -90,4 +96,3 @@ export const UsageAnalyticsPanel: React.FC<UsageAnalyticsPanelProps> = ({ stats 
     </section>
   );
 };
-

@@ -15,7 +15,7 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({
   urgency,
   primaryReason,
   socialFatigueScore,
-  disconnectSuggestion
+  disconnectSuggestion,
 }) => {
   return (
     <div className="score-grid">
@@ -31,9 +31,7 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({
         <small>{primaryReason ?? 'Activity is balanced.'}</small>
       </section>
 
-      <section
-        className={`score-card social ${socialFatigueScore >= 70 ? 'critical' : ''}`}
-      >
+      <section className={`score-card social ${socialFatigueScore >= 70 ? 'critical' : ''}`}>
         <div className="card-title">
           <p>Social</p>
           <Brain size={16} />
@@ -47,4 +45,3 @@ export const ScoreGrid: React.FC<ScoreGridProps> = ({
     </div>
   );
 };
-

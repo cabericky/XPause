@@ -34,4 +34,3 @@ export const initOverlayHost = (): OverlayHostElements | null => {
 
   return { host, shadow, mount };
 };
-

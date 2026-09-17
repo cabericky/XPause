@@ -3,30 +3,24 @@ import type {
   ExtensionRuntime,
   ExtensionStats,
   InsightSnapshot,
-  Settings as XPauseSettings
+  Settings as XPauseSettings,
 } from '../../../types';
-import {
-  defaultInsights,
-  defaultStats,
-  mergeStats
-} from '../../analytics';
+import { defaultInsights, defaultStats, mergeStats } from '../../analytics';
 import { defaultSettings } from '../../settings';
 import {
   getStorage,
   hasExtensionStorage,
-  setStorage
+  setStorage,
+  subscribeStorage,
 } from '../../../shared/storage/storage';
-import {
-  sendTabSettingsUpdated,
-  sendTabStartBreak
-} from '../../../shared/messaging/messages';
+import { sendTabSettingsUpdated, sendTabStartBreak } from '../../../shared/messaging/messages';
 import { resolveTheme } from '../../../shared/utils/theme';
 
 export const defaultRuntime: ExtensionRuntime = {
   fatigueScore: 0,
   urgency: 'none',
   reasons: ['Open any normal web page to start monitoring.'],
-  updatedAt: Date.now()
+  updatedAt: Date.now(),
 };
 
 export const loadExtensionState = async () => {
@@ -35,7 +29,7 @@ export const loadExtensionState = async () => {
       settings: defaultSettings,
       stats: defaultStats,
       runtime: defaultRuntime,
-      insights: defaultInsights
+      insights: defaultInsights,
     };
   }
 
@@ -43,23 +37,23 @@ export const loadExtensionState = async () => {
     'xpauseSettings',
     'xpauseStats',
     'xpauseRuntime',
-    'xpauseInsights'
+    'xpauseInsights',
   ]);
 
   return {
     settings: {
       ...defaultSettings,
-      ...(result.xpauseSettings as Partial<XPauseSettings> | undefined)
+      ...(result.xpauseSettings as Partial<XPauseSettings> | undefined),
     },
     stats: mergeStats(result.xpauseStats as Partial<ExtensionStats> | undefined),
     runtime: {
       ...defaultRuntime,
-      ...(result.xpauseRuntime as Partial<ExtensionRuntime> | undefined)
+      ...(result.xpauseRuntime as Partial<ExtensionRuntime> | undefined),
     },
     insights: {
       ...defaultInsights,
-      ...(result.xpauseInsights as Partial<InsightSnapshot> | undefined)
-    }
+      ...(result.xpauseInsights as Partial<InsightSnapshot> | undefined),
+    },
   };
 };
 
@@ -79,26 +73,40 @@ export const useExtensionState = () => {
         settings: nextSettings,
         stats: nextStats,
         runtime: nextRuntime,
-        insights: nextInsights
+        insights: nextInsights,
       }) => {
         setSettings(nextSettings);
         setStats(nextStats);
         setRuntime(nextRuntime);
         setInsights(nextInsights);
-      }
+      },
     );
 
-    const refreshId = window.setInterval(() => {
-      void loadExtensionState().then(
-        ({ stats: nextStats, runtime: nextRuntime, insights: nextInsights }) => {
-          setStats(nextStats);
-          setRuntime(nextRuntime);
-          setInsights(nextInsights);
-        }
-      );
-    }, 2500);
+    const unsubscribe = subscribeStorage((changes) => {
+      if (changes.xpauseSettings?.newValue) {
+        setSettings({
+          ...defaultSettings,
+          ...(changes.xpauseSettings.newValue as Partial<XPauseSettings>),
+        });
+      }
+      if (changes.xpauseStats?.newValue) {
+        setStats(mergeStats(changes.xpauseStats.newValue as Partial<ExtensionStats>));
+      }
+      if (changes.xpauseRuntime?.newValue) {
+        setRuntime({
+          ...defaultRuntime,
+          ...(changes.xpauseRuntime.newValue as Partial<ExtensionRuntime>),
+        });
+      }
+      if (changes.xpauseInsights?.newValue) {
+        setInsights({
+          ...defaultInsights,
+          ...(changes.xpauseInsights.newValue as Partial<InsightSnapshot>),
+        });
+      }
+    });
 
-    return () => window.clearInterval(refreshId);
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -135,8 +143,8 @@ export const useExtensionState = () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.id) {
         await sendTabStartBreak(tab.id, settings).catch(() => {
-          alert(
-            'Cannot start break on browser system pages (e.g. chrome:// or edge://). Please switch to a regular website tab.'
+          console.warn(
+            'Cannot start break on browser system pages (e.g. chrome:// or edge://). Please switch to a regular website tab.',
           );
         });
       }
@@ -155,7 +163,6 @@ export const useExtensionState = () => {
     saveSettings,
     startBreak,
     openPrivacy: () => setPrivacyOpen(true),
-    closePrivacy: () => setPrivacyOpen(false)
+    closePrivacy: () => setPrivacyOpen(false),
   };
 };
-

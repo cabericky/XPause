@@ -1,9 +1,6 @@
 import type { BreakUrgency, ExerciseDefinition } from '../../../types';
 
-export const getStepIndex = (
-  exercise: ExerciseDefinition,
-  elapsed: number
-): number => {
+export const getStepIndex = (exercise: ExerciseDefinition, elapsed: number): number => {
   let cursor = 0;
   for (let index = 0; index < exercise.steps.length; index += 1) {
     cursor += exercise.steps[index].duration;
@@ -16,7 +13,7 @@ export const patchExercisePanel = (
   existingPanel: HTMLElement,
   exercise: ExerciseDefinition,
   stepIndex: number,
-  elapsed: number
+  elapsed: number,
 ): boolean => {
   if (existingPanel.getAttribute('data-exercise-id') !== exercise.id) {
     return false;
@@ -52,7 +49,7 @@ export const renderExercisePanelHtml = (
   stepIndex: number,
   elapsed: number,
   urgency: BreakUrgency,
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark',
 ): string => {
   const step = exercise.steps[stepIndex];
   const remaining = Math.max(0, exercise.duration - elapsed);
@@ -73,7 +70,8 @@ export const renderExercisePanelHtml = (
         <button class="xp-close" type="button" data-action="close" aria-label="Dismiss">X</button>
       </div>
       <div class="xp-visual ${exercise.id}" aria-hidden="true">
-        <img class="xp-exercise-media" src="${imageUrl}" alt="${exercise.title}" width="88" height="88" />
+        <img class="xp-exercise-media" src="${imageUrl}" alt="${exercise.title}" width="88" height="88" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='block';" />
+        <span class="xp-shape" style="display:none"></span>
       </div>
       <div class="xp-ring" style="--progress: ${progress}%"><strong>${remaining}</strong><span>sec</span></div>
       <div class="xp-copy"><h3>${step.label}</h3><p>${step.cue}</p></div>
@@ -88,4 +86,3 @@ export const renderExercisePanelHtml = (
     </aside>
   `;
 };
-

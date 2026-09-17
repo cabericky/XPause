@@ -2,7 +2,7 @@ import type { ThemeMode } from '../../types';
 
 export const resolveTheme = (
   themeMode: ThemeMode,
-  systemPrefersDark?: boolean
+  systemPrefersDark?: boolean,
 ): 'light' | 'dark' => {
   if (themeMode !== 'system') return themeMode;
   if (typeof systemPrefersDark === 'boolean') {
@@ -13,4 +13,3 @@ export const resolveTheme = (
   }
   return 'light';
 };
-

@@ -1,9 +1,12 @@
 import type { ActivitySignals, BreakUrgency, FatigueResult, Sensitivity } from '../../types';
 
-const sensitivityThresholds: Record<Sensitivity, { soft: number; urgent: number; critical: number }> = {
+const sensitivityThresholds: Record<
+  Sensitivity,
+  { soft: number; urgent: number; critical: number }
+> = {
   low: { soft: 70, urgent: 90, critical: 96 },
   medium: { soft: 60, urgent: 85, critical: 94 },
-  high: { soft: 48, urgent: 76, critical: 90 }
+  high: { soft: 48, urgent: 76, critical: 90 },
 };
 
 export const clamp = (value: number, min = 0, max = 100): number =>
@@ -17,7 +20,7 @@ export const emptySignals = (): ActivitySignals => ({
   scrollVelocity: 0,
   scrollDepth: 0,
   visibilityChanges: 0,
-  continuousUseMinutes: 0
+  continuousUseMinutes: 0,
 });
 
 export const getUrgency = (score: number, sensitivity: Sensitivity): BreakUrgency => {
@@ -31,19 +34,21 @@ export const getUrgency = (score: number, sensitivity: Sensitivity): BreakUrgenc
 export const scoreActivity = (
   signals: ActivitySignals,
   previousScore: number,
-  sensitivity: Sensitivity
+  sensitivity: Sensitivity,
+  sessionLengthMinutes = 25,
 ): FatigueResult => {
   const reasons: string[] = [];
-  const sessionPressure = Math.min(signals.continuousUseMinutes * 1.55, 42);
+  const targetSession = Math.max(5, sessionLengthMinutes);
+  const sessionPressure = Math.min((signals.continuousUseMinutes / targetSession) * 38.75, 42);
   const typingPressure = Math.min(
     signals.keypressesPerMinute / 2.5 + signals.typingBurstCount * 1.8,
-    20
+    20,
   );
   const mousePressure = Math.min(signals.mouseVelocity / 46, 14);
   const scrollPressure = Math.min(signals.scrollVelocity / 30 + signals.scrollDepth / 11, 16);
   const visibilityPressure = Math.min(signals.visibilityChanges * 1.8, 8);
 
-  if (signals.continuousUseMinutes >= 25) reasons.push('Long continuous focus session');
+  if (signals.continuousUseMinutes >= targetSession) reasons.push('Long continuous focus session');
   if (signals.keypressesPerMinute > 70) reasons.push('Sustained typing intensity');
   if (signals.mouseVelocity > 420) reasons.push('High pointer movement');
   if (signals.scrollVelocity > 260) reasons.push('Rapid scrolling pattern');
@@ -60,7 +65,7 @@ export const scoreActivity = (
   return {
     score: Math.round(score),
     urgency: getUrgency(score, sensitivity),
-    reasons
+    reasons,
   };
 };
 
@@ -73,10 +78,9 @@ export const calculateSocialFatigue = (
   socialMinutes: number,
   passiveRatio: number,
   scrollEvents: number,
-  minutesSinceSocialActive = 0
+  minutesSinceSocialActive = 0,
 ): number => {
   const base = socialMinutes * 1.45 + passiveRatio * 32 + Math.min(scrollEvents / 2, 20);
   const recovery = minutesSinceSocialActive > 5 ? (minutesSinceSocialActive - 5) * 2 : 0;
   return Math.round(clamp(base - recovery));
 };
-

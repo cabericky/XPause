@@ -11,58 +11,65 @@ export const playAudioDataUrl = async (dataUrl: string): Promise<void> => {
   audio.volume = 0.78;
   audio.currentTime = 0;
   await audio.play().catch(() => undefined);
+  // Safety timeout allowing full chime duration while preventing runaway playback
   window.setTimeout(() => {
-    audio.pause();
-    audio.currentTime = 0;
-  }, 2000);
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch {
+      // Ignore
+    }
+  }, 7000);
 };
 
-export const playTone = (
+export const playTone = async (
   theme: SoundTheme,
-  variant: 'sound' | 'alert' = 'sound'
-): void => {
+  variant: 'sound' | 'alert' = 'sound',
+): Promise<void> => {
   if (typeof window === 'undefined') return;
   const AudioContextClass =
     window.AudioContext || (window as WindowWithLegacyAudio).webkitAudioContext;
   if (!AudioContextClass) return;
 
-  const context = new AudioContextClass();
-  const pattern = getSoundPattern(theme, variant);
+  try {
+    const context = new AudioContextClass();
+    if (context.state === 'suspended') {
+      await context.resume().catch(() => undefined);
+    }
+    const pattern = getSoundPattern(theme, variant);
 
-  pattern.forEach((note) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type =
-      theme === 'pulse' || variant === 'alert' ? 'triangle' : 'sine';
-    oscillator.frequency.setValueAtTime(note.frequency, context.currentTime + note.start);
-    gain.gain.setValueAtTime(0.0001, context.currentTime + note.start);
-    gain.gain.exponentialRampToValueAtTime(
-      note.gain,
-      context.currentTime + note.start + 0.03
-    );
-    gain.gain.exponentialRampToValueAtTime(
-      0.0001,
-      context.currentTime + note.start + note.duration
-    );
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start(context.currentTime + note.start);
-    oscillator.stop(context.currentTime + note.start + note.duration + 0.04);
-  });
+    pattern.forEach((note) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = theme === 'pulse' || variant === 'alert' ? 'triangle' : 'sine';
+      oscillator.frequency.setValueAtTime(note.frequency, context.currentTime + note.start);
+      gain.gain.setValueAtTime(0.0001, context.currentTime + note.start);
+      gain.gain.exponentialRampToValueAtTime(note.gain, context.currentTime + note.start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(
+        0.0001,
+        context.currentTime + note.start + note.duration,
+      );
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start(context.currentTime + note.start);
+      oscillator.stop(context.currentTime + note.start + note.duration + 0.04);
+    });
 
-  window.setTimeout(() => {
-    void context.close().catch(() => undefined);
-  }, 1700);
+    window.setTimeout(() => {
+      void context.close().catch(() => undefined);
+    }, 1700);
+  } catch {
+    // Gracefully ignore audio errors (e.g. autoplay denial or device errors)
+  }
 };
 
 export const playSound = async (
   theme: SoundTheme,
   variant: 'sound' | 'alert' = 'sound',
-  customSoundDataUrl?: string
+  customSoundDataUrl?: string,
 ): Promise<void> => {
   if (theme === 'custom' && customSoundDataUrl) {
     await playAudioDataUrl(customSoundDataUrl);
     return;
   }
-  playTone(theme, variant);
+  await playTone(theme, variant);
 };
-

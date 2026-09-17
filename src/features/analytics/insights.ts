@@ -7,14 +7,14 @@ export const defaultInsights: InsightSnapshot = {
   passiveRatio: 0,
   schedule: ['Open a normal web page to begin learning your rhythm.'],
   disconnectSuggestion: 'No disconnect needed yet.',
-  updatedAt: Date.now()
+  updatedAt: Date.now(),
 };
 
 export const buildInsights = (
   usage: UsageDay,
   category: UsageCategory,
   eyeStrainMinutes: number,
-  socialFatigueScore: number
+  socialFatigueScore: number,
 ): InsightSnapshot => {
   const passiveRatio = usage.screenMs > 0 ? usage.passiveMs / usage.screenMs : 0;
   const socialMinutes = Math.round(usage.categories.social / 60_000);
@@ -30,7 +30,7 @@ export const buildInsights = (
       ? 'Take a 15 minute social disconnect before returning.'
       : entertainmentMinutes > 45
         ? 'Switch to a work or recovery tab before more entertainment.'
-        : 'Micro-break timing looks balanced.'
+        : 'Micro-break timing looks balanced.',
   ];
 
   return {
@@ -45,7 +45,6 @@ export const buildInsights = (
         : socialFatigueScore >= 55
           ? 'Consider closing social tabs for one focus block.'
           : 'No disconnect needed yet.',
-    updatedAt: Date.now()
+    updatedAt: Date.now(),
   };
 };
-

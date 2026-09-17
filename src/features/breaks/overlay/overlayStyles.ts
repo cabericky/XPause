@@ -93,4 +93,3 @@ export const overlayStyles = `
   @keyframes xpNeck { 0%,100% { transform: translateX(-12px) rotate(-6deg); } 50% { transform: translateX(12px) rotate(6deg); } }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 `;
-

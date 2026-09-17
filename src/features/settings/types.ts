@@ -16,4 +16,3 @@ export interface Settings {
   themeMode: ThemeMode;
   dailyBreakGoal: number;
 }
-

@@ -4,3 +4,4 @@ dist-extension/
 .npm-cache/
 *.log
 *.tsbuildinfo
+*.zip

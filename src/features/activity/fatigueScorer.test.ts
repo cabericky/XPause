@@ -14,10 +14,10 @@ describe('fatigueScorer', () => {
         typingBurstCount: 4,
         scrollVelocity: 340,
         scrollDepth: 85,
-        continuousUseMinutes: 38
+        continuousUseMinutes: 38,
       },
       90,
-      'medium'
+      'medium',
     );
 
     expect(result.score).toBeGreaterThanOrEqual(85);
@@ -41,5 +41,12 @@ describe('fatigueScorer', () => {
     const recoveredSocialScore = calculateSocialFatigue(30, 0.6, 20, 30);
     expect(recoveredSocialScore).toBeLessThan(activeSocialScore);
   });
-});
 
+  it('adjusts session pressure when sessionLengthMinutes is customized', () => {
+    const standard = scoreActivity({ ...baseSignals, continuousUseMinutes: 15 }, 0, 'medium', 25);
+    const customized = scoreActivity({ ...baseSignals, continuousUseMinutes: 15 }, 0, 'medium', 15);
+    expect(customized.score).toBeGreaterThan(standard.score);
+    expect(customized.reasons).toContain('Long continuous focus session');
+    expect(standard.reasons).not.toContain('Long continuous focus session');
+  });
+});

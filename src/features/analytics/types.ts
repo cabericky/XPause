@@ -64,5 +64,6 @@ export interface ExtensionRuntime {
   urgency: BreakUrgency;
   reasons: string[];
   updatedAt: number;
+  eyeStrainStartedAt?: number;
+  snoozedUntil?: number;
 }
-

@@ -1,10 +1,4 @@
-import type {
-  DailyStats,
-  ExerciseId,
-  ExtensionStats,
-  UsageCategory,
-  UsageDay
-} from '../../types';
+import type { DailyStats, ExerciseId, ExtensionStats, UsageCategory, UsageDay } from '../../types';
 import { today } from '../../shared/utils/date';
 
 export const emptyDaily = (date = today()): DailyStats => ({
@@ -16,7 +10,7 @@ export const emptyDaily = (date = today()): DailyStats => ({
   missed: 0,
   blink: 0,
   wrist: 0,
-  neck: 0
+  neck: 0,
 });
 
 export const emptyUsageDay = (date = today()): UsageDay => ({
@@ -28,7 +22,7 @@ export const emptyUsageDay = (date = today()): UsageDay => ({
   socialVisits: 0,
   scrollEvents: 0,
   disconnectPrompts: 0,
-  eyeStrainPrompts: 0
+  eyeStrainPrompts: 0,
 });
 
 export const defaultStats: ExtensionStats = {
@@ -40,24 +34,22 @@ export const defaultStats: ExtensionStats = {
   completedByExercise: { blink: 0, wrist: 0, neck: 0 },
   usage: {
     today: emptyUsageDay(),
-    week: {}
-  }
+    week: {},
+  },
 };
 
-export const mergeStats = (
-  value: Partial<ExtensionStats> | undefined
-): ExtensionStats => ({
+export const mergeStats = (value: Partial<ExtensionStats> | undefined): ExtensionStats => ({
   ...defaultStats,
   ...value,
   daily: { ...defaultStats.daily, ...value?.daily },
   completedByExercise: {
     ...defaultStats.completedByExercise,
-    ...value?.completedByExercise
+    ...value?.completedByExercise,
   },
   usage: {
     today: { ...defaultStats.usage.today, ...value?.usage?.today },
-    week: value?.usage?.week ?? {}
-  }
+    week: value?.usage?.week ?? {},
+  },
 });
 
 export const rollStats = (stats: ExtensionStats): ExtensionStats => {
@@ -72,7 +64,7 @@ export const rollStats = (stats: ExtensionStats): ExtensionStats => {
   const recentWeek = Object.fromEntries(
     Object.entries(week)
       .sort(([a], [b]) => a.localeCompare(b))
-      .slice(-365)
+      .slice(-365),
   ) as Record<string, UsageDay>;
 
   return {
@@ -80,8 +72,8 @@ export const rollStats = (stats: ExtensionStats): ExtensionStats => {
     daily: stats.daily.date === todayDate ? stats.daily : emptyDaily(todayDate),
     usage: {
       today: currentUsage.date === todayDate ? currentUsage : emptyUsageDay(todayDate),
-      week: recentWeek
-    }
+      week: recentWeek,
+    },
   };
 };
 
@@ -94,7 +86,7 @@ export interface BreakCompletionResult {
 export const recordBreakCompletion = (
   stats: ExtensionStats,
   exerciseId: ExerciseId,
-  partial: boolean
+  partial: boolean,
 ): BreakCompletionResult => {
   const rolled = rollStats(stats);
   const xpAward = partial ? 50 : 100;
@@ -110,12 +102,12 @@ export const recordBreakCompletion = (
       xp: rolled.daily.xp + xpAward,
       completed: rolled.daily.completed + (partial ? 0 : 1),
       partial: rolled.daily.partial + (partial ? 1 : 0),
-      [exerciseId]: rolled.daily[exerciseId] + 1
+      [exerciseId]: rolled.daily[exerciseId] + 1,
     },
     completedByExercise: {
       ...rolled.completedByExercise,
-      [exerciseId]: rolled.completedByExercise[exerciseId] + 1
-    }
+      [exerciseId]: rolled.completedByExercise[exerciseId] + 1,
+    },
   };
 
   return { nextStats, xpAward, fatigueReduction };
@@ -123,7 +115,7 @@ export const recordBreakCompletion = (
 
 export const recordBreakMiss = (
   stats: ExtensionStats,
-  kind: 'skipped' | 'snoozed'
+  kind: 'skipped' | 'snoozed',
 ): ExtensionStats => {
   const rolled = rollStats(stats);
   return {
@@ -132,8 +124,8 @@ export const recordBreakMiss = (
     daily: {
       ...rolled.daily,
       skipped: rolled.daily.skipped + (kind === 'skipped' ? 1 : 0),
-      missed: rolled.daily.missed + 1
-    }
+      missed: rolled.daily.missed + 1,
+    },
   };
 };
 
@@ -142,7 +134,7 @@ export const recordUsageTick = (
   category: UsageCategory,
   tickMs: number,
   isActive: boolean,
-  hasScrollEvent: boolean
+  hasScrollEvent: boolean,
 ): ExtensionStats => {
   const rolled = rollStats(stats);
   const todayUsage = { ...rolled.usage.today };
@@ -150,7 +142,7 @@ export const recordUsageTick = (
   todayUsage.screenMs += tickMs;
   todayUsage.categories = {
     ...todayUsage.categories,
-    [category]: todayUsage.categories[category] + tickMs
+    [category]: todayUsage.categories[category] + tickMs,
   };
   todayUsage.activeMs += isActive ? tickMs : 0;
   todayUsage.passiveMs += isActive ? 0 : tickMs;
@@ -160,8 +152,8 @@ export const recordUsageTick = (
     ...rolled,
     usage: {
       ...rolled.usage,
-      today: todayUsage
-    }
+      today: todayUsage,
+    },
   };
 };
 
@@ -173,15 +165,15 @@ export const recordSocialVisit = (stats: ExtensionStats): ExtensionStats => {
       ...rolled.usage,
       today: {
         ...rolled.usage.today,
-        socialVisits: rolled.usage.today.socialVisits + 1
-      }
-    }
+        socialVisits: rolled.usage.today.socialVisits + 1,
+      },
+    },
   };
 };
 
 export const recordPrompt = (
   stats: ExtensionStats,
-  kind: 'eyeStrain' | 'disconnect'
+  kind: 'eyeStrain' | 'disconnect',
 ): ExtensionStats => {
   const rolled = rollStats(stats);
   return {
@@ -190,11 +182,9 @@ export const recordPrompt = (
       ...rolled.usage,
       today: {
         ...rolled.usage.today,
-        eyeStrainPrompts:
-          rolled.usage.today.eyeStrainPrompts + (kind === 'eyeStrain' ? 1 : 0),
-        disconnectPrompts:
-          rolled.usage.today.disconnectPrompts + (kind === 'disconnect' ? 1 : 0)
-      }
-    }
+        eyeStrainPrompts: rolled.usage.today.eyeStrainPrompts + (kind === 'eyeStrain' ? 1 : 0),
+        disconnectPrompts: rolled.usage.today.disconnectPrompts + (kind === 'disconnect' ? 1 : 0),
+      },
+    },
   };
 };

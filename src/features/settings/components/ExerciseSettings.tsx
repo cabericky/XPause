@@ -7,10 +7,7 @@ interface ExerciseSettingsProps {
   onSaveSettings: (settings: Settings) => void;
 }
 
-export const ExerciseSettings: React.FC<ExerciseSettingsProps> = ({
-  settings,
-  onSaveSettings
-}) => {
+export const ExerciseSettings: React.FC<ExerciseSettingsProps> = ({ settings, onSaveSettings }) => {
   const toggleExercise = (id: ExerciseId) => {
     const enabled = settings.enabledExercises.includes(id)
       ? settings.enabledExercises.filter((item) => item !== id)
@@ -36,4 +33,3 @@ export const ExerciseSettings: React.FC<ExerciseSettingsProps> = ({
     </div>
   );
 };
-

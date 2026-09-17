@@ -25,4 +25,3 @@ export const StatusStrip: React.FC<StatusStripProps> = ({ urgency, category }) =
     </section>
   );
 };
-

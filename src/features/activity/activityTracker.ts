@@ -16,7 +16,7 @@ export class ActivityTracker {
   private pointerInitialized = false;
   private lastScroll = {
     y: typeof window !== 'undefined' ? window.scrollY : 0,
-    time: Date.now()
+    time: Date.now(),
   };
   private cachedDocHeight = 0;
   private lastDocHeightCheck = 0;
@@ -40,6 +40,7 @@ export class ActivityTracker {
     window.addEventListener('click', this.onClick, { passive: true });
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('scroll', this.onScroll, { passive: true });
+    document.addEventListener('scroll', this.onScroll, { capture: true, passive: true });
     document.addEventListener('visibilitychange', this.onVisibility);
 
     this.attached = true;
@@ -52,6 +53,7 @@ export class ActivityTracker {
     window.removeEventListener('click', this.onClick);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('scroll', this.onScroll);
+    document.removeEventListener('scroll', this.onScroll, { capture: true });
     document.removeEventListener('visibilitychange', this.onVisibility);
 
     this.attached = false;
@@ -81,14 +83,14 @@ export class ActivityTracker {
     }
     const continuousUseMinutes = (now - this.sessionStart) / 60_000;
     const keypressesPerMinute = this.keyTimestamps.filter(
-      (timestamp) => now - timestamp < 60_000
+      (timestamp) => now - timestamp < 60_000,
     ).length;
 
     const signals: ActivitySignals = {
       ...this.signals,
       idleMs,
       keypressesPerMinute,
-      continuousUseMinutes
+      continuousUseMinutes,
     };
 
     const isActive =
@@ -107,7 +109,7 @@ export class ActivityTracker {
       idleMs,
       continuousUseMinutes,
       isActive,
-      minutesSinceSocialActive
+      minutesSinceSocialActive,
     };
   }
 
@@ -135,13 +137,17 @@ export class ActivityTracker {
       return;
     }
 
+    const elapsedMs = now - this.lastPointer.time;
+    if (elapsedMs < 30) {
+      return;
+    }
+
     const distance = Math.hypot(
       event.clientX - this.lastPointer.x,
-      event.clientY - this.lastPointer.y
+      event.clientY - this.lastPointer.y,
     );
-    const seconds = Math.max((now - this.lastPointer.time) / 1000, 0.016);
-    this.signals.mouseVelocity =
-      this.signals.mouseVelocity * 0.78 + (distance / seconds) * 0.22;
+    const seconds = Math.max(elapsedMs / 1000, 0.016);
+    this.signals.mouseVelocity = this.signals.mouseVelocity * 0.78 + (distance / seconds) * 0.22;
     this.lastPointer.x = event.clientX;
     this.lastPointer.y = event.clientY;
     this.lastPointer.time = now;
@@ -158,11 +164,9 @@ export class ActivityTracker {
     if (this.category === 'social') this.lastSocialInteraction = now;
 
     this.keyTimestamps = [...this.keyTimestamps, now].filter(
-      (timestamp) => now - timestamp < 60_000
+      (timestamp) => now - timestamp < 60_000,
     );
-    const recentFiveSeconds = this.keyTimestamps.filter(
-      (timestamp) => now - timestamp < 5_000
-    );
+    const recentFiveSeconds = this.keyTimestamps.filter((timestamp) => now - timestamp < 5_000);
     if (recentFiveSeconds.length >= 12 && !this.burstStarted) {
       this.signals.typingBurstCount += 1;
       this.burstStarted = true;
@@ -183,16 +187,15 @@ export class ActivityTracker {
     if (now - this.lastDocHeightCheck > 2000 || this.cachedDocHeight === 0) {
       this.cachedDocHeight = Math.max(
         document.documentElement.scrollHeight - window.innerHeight,
-        window.innerHeight
+        window.innerHeight,
       );
       this.lastDocHeightCheck = now;
     }
 
-    this.signals.scrollVelocity =
-      this.signals.scrollVelocity * 0.76 + (distance / seconds) * 0.24;
+    this.signals.scrollVelocity = this.signals.scrollVelocity * 0.76 + (distance / seconds) * 0.24;
     this.signals.scrollDepth = Math.max(
       this.signals.scrollDepth,
-      Math.round((window.scrollY / this.cachedDocHeight) * 100)
+      Math.round((window.scrollY / this.cachedDocHeight) * 100),
     );
     this.lastScroll.y = window.scrollY;
     this.lastScroll.time = now;
@@ -207,4 +210,3 @@ export class ActivityTracker {
     }
   };
 }
-

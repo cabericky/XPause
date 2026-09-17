@@ -1,17 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import {
-  InsightsPanel,
-  UsageAnalyticsPanel
-} from '../features/analytics';
+import { InsightsPanel, UsageAnalyticsPanel } from '../features/analytics';
 import {
   AppHeader,
   BadgesSection,
   ScoreGrid,
   StatGrid,
   StatusStrip,
-  useExtensionState
+  useExtensionState,
 } from '../features/dashboard';
 import { PrivacyView } from '../features/privacy';
 import { SettingsPanel } from '../features/settings';
@@ -27,7 +24,7 @@ const Popup = () => {
     saveSettings,
     startBreak,
     openPrivacy,
-    closePrivacy
+    closePrivacy,
   } = useExtensionState();
 
   if (privacyOpen) {
@@ -45,7 +42,7 @@ const Popup = () => {
         socialFatigueScore={insights.socialFatigueScore}
         disconnectSuggestion={insights.disconnectSuggestion}
       />
-      <StatGrid stats={stats} />
+      <StatGrid stats={stats} dailyGoal={settings.dailyBreakGoal} />
       <UsageAnalyticsPanel stats={stats} />
       <InsightsPanel insights={insights} />
       <SettingsPanel
@@ -61,5 +58,5 @@ const Popup = () => {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <Popup />
-  </React.StrictMode>
+  </React.StrictMode>,
 );

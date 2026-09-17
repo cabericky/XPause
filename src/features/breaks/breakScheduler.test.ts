@@ -10,7 +10,7 @@ describe('BreakScheduler', () => {
       category: 'social',
       urgency: 'critical',
       isSnoozed: false,
-      isBusy: true
+      isBusy: true,
     });
     expect(decision).toBeNull();
   });
@@ -23,7 +23,7 @@ describe('BreakScheduler', () => {
       category: 'work',
       urgency: 'none',
       isSnoozed: false,
-      isBusy: false
+      isBusy: false,
     });
     expect(decision).toEqual({ type: 'eyeStrain' });
 
@@ -34,7 +34,7 @@ describe('BreakScheduler', () => {
       category: 'work',
       urgency: 'none',
       isSnoozed: false,
-      isBusy: false
+      isBusy: false,
     });
     expect(followUp).toBeNull();
   });
@@ -47,7 +47,7 @@ describe('BreakScheduler', () => {
       category: 'social',
       urgency: 'none',
       isSnoozed: false,
-      isBusy: false
+      isBusy: false,
     });
     expect(decision).toEqual({ type: 'social' });
   });
@@ -60,22 +60,31 @@ describe('BreakScheduler', () => {
       category: 'work',
       urgency: 'urgent',
       isSnoozed: false,
-      isBusy: false
+      isBusy: false,
     });
     expect(decision).toEqual({ type: 'fatigue', urgency: 'urgent' });
   });
 
-  it('respects snoozed state for fatigue and social reminders', () => {
+  it('respects snoozed state for eye-strain, fatigue, and social reminders', () => {
     const scheduler = new BreakScheduler();
-    const decision = scheduler.evaluate({
+    const eyeDecision = scheduler.evaluate({
+      eyeStrainMinutes: 25,
+      socialFatigueScore: 20,
+      category: 'work',
+      urgency: 'none',
+      isSnoozed: true,
+      isBusy: false,
+    });
+    expect(eyeDecision).toBeNull();
+
+    const socialDecision = scheduler.evaluate({
       eyeStrainMinutes: 5,
       socialFatigueScore: 80,
       category: 'social',
       urgency: 'urgent',
       isSnoozed: true,
-      isBusy: false
+      isBusy: false,
     });
-    expect(decision).toBeNull();
+    expect(socialDecision).toBeNull();
   });
 });
-

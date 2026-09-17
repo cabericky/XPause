@@ -31,4 +31,3 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights }) => {
     </section>
   );
 };
-

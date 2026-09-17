@@ -1,11 +1,11 @@
-import type { BreakUrgency, ExerciseDefinition, ExtensionStats } from '../types';
+import type { BreakUrgency, ExerciseDefinition, ExtensionRuntime, ExtensionStats } from '../types';
 import {
   ActivityTracker,
   calculateSocialFatigue,
   clamp,
   classifyHost,
   getUrgency,
-  scoreActivity
+  scoreActivity,
 } from '../features/activity';
 import {
   buildInsights,
@@ -15,37 +15,49 @@ import {
   recordBreakMiss,
   recordPrompt,
   recordSocialVisit,
-  recordUsageTick
+  recordUsageTick,
 } from '../features/analytics';
 import {
   BreakOverlayManager,
   BreakScheduler,
   exercises,
-  initOverlayHost
+  initOverlayHost,
 } from '../features/breaks';
 import { defaultSettings } from '../features/settings';
-import { getStorage, readStorage, setStorage } from '../shared/storage/storage';
 import {
-  type ExtensionMessage,
-  sendNotificationMessage
-} from '../shared/messaging/messages';
+  getStorage,
+  hasExtensionContext,
+  readStorage,
+  setStorage,
+  subscribeStorage,
+} from '../shared/storage/storage';
+import { type ExtensionMessage, sendNotificationMessage } from '../shared/messaging/messages';
 
 const saveRuntime = async (
   score: number,
   urgency: BreakUrgency,
-  reasons: string[]
+  reasons: string[],
+  eyeStrainStartedAt?: number,
+  snoozedUntil?: number,
 ): Promise<void> => {
   await setStorage({
     xpauseRuntime: {
       fatigueScore: score,
       urgency,
       reasons: reasons.length ? reasons : ['Activity is currently balanced'],
-      updatedAt: Date.now()
-    }
+      updatedAt: Date.now(),
+      eyeStrainStartedAt,
+      snoozedUntil,
+    },
   });
 };
 
 const install = (): void => {
+  if (typeof window === 'undefined') return;
+  const xpauseWindow = window as unknown as { __xpauseInstalled?: boolean };
+  if (xpauseWindow.__xpauseInstalled) return;
+  xpauseWindow.__xpauseInstalled = true;
+
   const hostElements = initOverlayHost();
   if (!hostElements) return;
 
@@ -60,17 +72,69 @@ const install = (): void => {
   let lastTickAt = Date.now();
   let eyeStrainStartedAt = Date.now();
 
-  const saveCompletion = async (
-    exercise: ExerciseDefinition,
-    partial: boolean
-  ): Promise<void> => {
+  const syncFromStorage = async (): Promise<void> => {
+    const data = await getStorage(['xpauseRuntime', 'xpauseSettings']);
+    if (data.xpauseSettings) {
+      currentSettings = {
+        ...defaultSettings,
+        ...(data.xpauseSettings as Partial<typeof defaultSettings>),
+      };
+      overlayManager.refreshActiveDisplay();
+    }
+    const runtime = data.xpauseRuntime as Partial<ExtensionRuntime> | undefined;
+    if (runtime) {
+      const now = Date.now();
+      const elapsedSinceUpdate = now - (runtime.updatedAt ?? now);
+      if (typeof runtime.fatigueScore === 'number' && elapsedSinceUpdate < 15 * 60_000) {
+        fatigueScore = Math.max(0, runtime.fatigueScore - Math.floor(elapsedSinceUpdate / 60_000));
+      }
+      if (
+        typeof runtime.eyeStrainStartedAt === 'number' &&
+        now - runtime.eyeStrainStartedAt < 4 * 3600_000 &&
+        elapsedSinceUpdate < 10 * 60_000
+      ) {
+        eyeStrainStartedAt = runtime.eyeStrainStartedAt;
+      }
+      if (typeof runtime.snoozedUntil === 'number' && runtime.snoozedUntil > now) {
+        overlayManager.setSnoozedUntil(runtime.snoozedUntil);
+      }
+    }
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      void syncFromStorage();
+      lastTickAt = Date.now();
+    }
+  });
+
+  subscribeStorage((changes) => {
+    if (changes.xpauseSettings?.newValue) {
+      currentSettings = {
+        ...defaultSettings,
+        ...(changes.xpauseSettings.newValue as Partial<typeof defaultSettings>),
+      };
+      overlayManager.refreshActiveDisplay();
+    }
+    if (changes.xpauseRuntime?.newValue) {
+      const runtime = changes.xpauseRuntime.newValue as Partial<ExtensionRuntime>;
+      if (typeof runtime.snoozedUntil === 'number') {
+        overlayManager.setSnoozedUntil(runtime.snoozedUntil);
+      }
+      if (typeof runtime.fatigueScore === 'number' && document.hidden) {
+        fatigueScore = runtime.fatigueScore;
+      }
+    }
+  });
+
+  const saveCompletion = async (exercise: ExerciseDefinition, partial: boolean): Promise<void> => {
     const rawStored = (await getStorage('xpauseStats')).xpauseStats as
       | Partial<ExtensionStats>
       | undefined;
     const { nextStats, fatigueReduction } = recordBreakCompletion(
       mergeStats(rawStored),
       exercise.id,
-      partial
+      partial,
     );
 
     fatigueScore = Math.max(0, fatigueScore - fatigueReduction);
@@ -78,7 +142,13 @@ const install = (): void => {
     eyeStrainStartedAt = Date.now();
 
     await setStorage({ xpauseStats: nextStats });
-    await saveRuntime(fatigueScore, 'none', ['Break completed']);
+    await saveRuntime(
+      fatigueScore,
+      'none',
+      ['Break completed'],
+      eyeStrainStartedAt,
+      overlayManager.getSnoozedUntil(),
+    );
   };
 
   const saveMiss = async (kind: 'skipped' | 'snoozed'): Promise<void> => {
@@ -95,7 +165,10 @@ const install = (): void => {
     getSocialFatigueScore: () => socialFatigueScore,
     onBreakCompleted: saveCompletion,
     onBreakMissed: saveMiss,
-    onNotification: sendNotificationMessage
+    onNotification: sendNotificationMessage,
+    onSnooze: (snoozedUntil) => {
+      void saveRuntime(fatigueScore, 'none', ['Break snoozed'], eyeStrainStartedAt, snoozedUntil);
+    },
   });
 
   if (category === 'social') {
@@ -129,8 +202,15 @@ const install = (): void => {
     }
   });
 
-  window.setInterval(() => {
+  const intervalId = window.setInterval(() => {
     void (async () => {
+      if (!hasExtensionContext()) {
+        window.clearInterval(intervalId);
+        tracker.destroy();
+        overlayManager.destroy();
+        return;
+      }
+
       if (document.hidden) {
         lastTickAt = Date.now();
         return;
@@ -149,7 +229,8 @@ const install = (): void => {
       const result = scoreActivity(
         snapshot.signals,
         fatigueScore,
-        currentSettings.sensitivity
+        currentSettings.sensitivity,
+        currentSettings.sessionLengthMinutes,
       );
 
       fatigueScore =
@@ -165,7 +246,7 @@ const install = (): void => {
         category,
         tickMs,
         snapshot.isActive,
-        snapshot.signals.scrollVelocity > 80
+        snapshot.signals.scrollVelocity > 80,
       );
 
       const socialMinutes = stored.usage.today.categories.social / 60_000;
@@ -178,7 +259,7 @@ const install = (): void => {
         socialMinutes,
         passiveRatio,
         stored.usage.today.scrollEvents,
-        snapshot.minutesSinceSocialActive
+        snapshot.minutesSinceSocialActive,
       );
 
       const eyeStrainMinutes = Math.floor((now - eyeStrainStartedAt) / 60_000);
@@ -186,7 +267,7 @@ const install = (): void => {
         stored.usage.today,
         category,
         eyeStrainMinutes,
-        socialFatigueScore
+        socialFatigueScore,
       );
 
       const urgency =
@@ -201,7 +282,7 @@ const install = (): void => {
         urgency,
         isSnoozed: overlayManager.isSnoozed(now),
         isBusy: overlayManager.isBusy(),
-        now
+        now,
       });
 
       if (prompt?.type === 'eyeStrain') {
@@ -211,16 +292,20 @@ const install = (): void => {
         stored = recordPrompt(stored, 'disconnect');
         overlayManager.renderReminder('social', 'urgent');
         if (currentSettings.notificationsEnabled) {
-          sendNotificationMessage(
-            'Social fatigue is high. Consider disconnecting for 15 minutes.'
-          );
+          sendNotificationMessage('Social fatigue is high. Consider disconnecting for 15 minutes.');
         }
       } else if (prompt?.type === 'fatigue') {
         overlayManager.renderReminder('fatigue', prompt.urgency);
       }
 
       await setStorage({ xpauseStats: stored, xpauseInsights: insights });
-      await saveRuntime(fatigueScore, urgency, result.reasons);
+      await saveRuntime(
+        fatigueScore,
+        urgency,
+        result.reasons,
+        eyeStrainStartedAt,
+        overlayManager.getSnoozedUntil(),
+      );
 
       tracker.decay();
     })();

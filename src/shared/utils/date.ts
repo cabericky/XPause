@@ -9,4 +9,3 @@ export const formatChartDate = (date: string, range: UsageRange): string => {
   if (range === 'yearly') return value.toLocaleDateString(undefined, { month: 'short' });
   return value.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 };
-

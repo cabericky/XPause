@@ -9,7 +9,7 @@ import {
   recordPrompt,
   recordSocialVisit,
   recordUsageTick,
-  rollStats
+  rollStats,
 } from './stats';
 import type { ExtensionStats } from '../../types';
 
@@ -29,15 +29,15 @@ describe('analytics stats', () => {
       daily: {
         ...emptyDaily(yesterday),
         xp: 300,
-        completed: 2
+        completed: 2,
       },
       usage: {
         today: {
           ...emptyUsageDay(yesterday),
-          screenMs: 3600000
+          screenMs: 3600000,
         },
-        week: {}
-      }
+        week: {},
+      },
     };
 
     const rolled = rollStats(oldStats);

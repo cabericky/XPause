@@ -8,6 +8,5 @@ export const defaultSettings: Settings = {
   notificationsEnabled: false,
   soundTheme: 'soft',
   themeMode: 'light',
-  dailyBreakGoal: 4
+  dailyBreakGoal: 4,
 };
-

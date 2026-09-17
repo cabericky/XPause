@@ -16,4 +16,3 @@ export interface ExerciseDefinition {
   accent: string;
   steps: ExerciseStep[];
 }
-

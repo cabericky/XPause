@@ -5,4 +5,3 @@ export const formatDuration = (ms: number): string => {
   const remaining = minutes % 60;
   return `${hours}h ${remaining}m`;
 };
-

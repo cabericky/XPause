@@ -11,20 +11,27 @@ interface SoundSettingsPanelProps {
 
 export const SoundSettingsPanel: React.FC<SoundSettingsPanelProps> = ({
   settings,
-  onSaveSettings
+  onSaveSettings,
 }) => {
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const toggleSound = () => {
     const nextSettings = { ...settings, soundEnabled: !settings.soundEnabled };
-    void playSound(nextSettings.soundTheme, 'sound', nextSettings.customSoundDataUrl);
+    if (nextSettings.soundEnabled) {
+      void playSound(nextSettings.soundTheme, 'sound', nextSettings.customSoundDataUrl);
+    }
     onSaveSettings(nextSettings);
   };
 
   const uploadCustomSound = (file: File) => {
-    if (!file.type.startsWith('audio/')) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Audio file size must be under 2MB.');
+    setUploadError(null);
+    if (!file.type.startsWith('audio/')) {
+      setUploadError('Please select a valid audio file.');
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setUploadError('Audio file size must be under 1MB.');
       return;
     }
     const reader = new FileReader();
@@ -36,10 +43,13 @@ export const SoundSettingsPanel: React.FC<SoundSettingsPanelProps> = ({
         soundEnabled: true,
         soundTheme: 'custom',
         customSoundDataUrl: dataUrl,
-        customSoundName: file.name
+        customSoundName: file.name,
       };
       void playAudioDataUrl(dataUrl);
       onSaveSettings(nextSettings);
+    });
+    reader.addEventListener('error', () => {
+      setUploadError('Failed to read audio file.');
     });
     reader.readAsDataURL(file);
   };
@@ -106,6 +116,19 @@ export const SoundSettingsPanel: React.FC<SoundSettingsPanelProps> = ({
               }}
             />
           </label>
+          {uploadError ? (
+            <p
+              className="upload-error"
+              style={{
+                color: '#E11D48',
+                fontSize: '12px',
+                margin: '4px 0 0',
+                lineHeight: 1.4,
+              }}
+            >
+              {uploadError}
+            </p>
+          ) : null}
           {settings.customSoundDataUrl ? (
             <button
               type="button"
@@ -123,4 +146,3 @@ export const SoundSettingsPanel: React.FC<SoundSettingsPanelProps> = ({
     </>
   );
 };
-

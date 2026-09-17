@@ -18,10 +18,48 @@ export const readStorage = async <T>(key: string, fallback: T): Promise<T> => {
   if (!hasExtensionContext()) return fallback;
   try {
     const result = await chrome.storage.local.get(key);
-    return { ...fallback, ...(result[key] as Partial<T> | undefined) };
+    const value = result[key];
+    if (value === undefined) return fallback;
+    if (
+      typeof fallback === 'object' &&
+      fallback !== null &&
+      !Array.isArray(fallback) &&
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value)
+    ) {
+      return { ...fallback, ...value } as T;
+    }
+    return value as T;
   } catch {
     return fallback;
   }
+};
+
+export const subscribeStorage = (
+  callback: (changes: Record<string, { oldValue?: unknown; newValue?: unknown }>) => void,
+): (() => void) => {
+  if (typeof chrome === 'undefined' || !chrome.storage?.onChanged?.addListener) {
+    return () => undefined;
+  }
+
+  const listener = (
+    changes: Record<string, { oldValue?: unknown; newValue?: unknown }>,
+    areaName: string,
+  ) => {
+    if (areaName === 'local') {
+      callback(changes);
+    }
+  };
+
+  chrome.storage.onChanged.addListener(listener);
+  return () => {
+    try {
+      chrome.storage.onChanged?.removeListener(listener);
+    } catch {
+      // Extension context may be invalidated
+    }
+  };
 };
 
 export const getStorage = async (keys?: string | string[]): Promise<Record<string, unknown>> => {
@@ -50,4 +88,3 @@ export const sendRuntimeMessage = (message: unknown): void => {
     // Ignore invalidated extension contexts from stale scripts
   }
 };
-

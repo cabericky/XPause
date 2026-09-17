@@ -21,10 +21,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onStartBreak }) => {
         className="icon-button start-button"
         onClick={onStartBreak}
         aria-label="Start break"
+        title="Start break"
       >
         <Play size={16} fill="currentColor" />
       </button>
     </header>
   );
 };
-

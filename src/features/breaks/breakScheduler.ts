@@ -28,6 +28,7 @@ export class BreakScheduler {
     // 1. Eye-strain reset check (20-20-20 rule)
     if (
       context.eyeStrainMinutes >= 20 &&
+      !context.isSnoozed &&
       now - this.lastEyePromptAt > 20 * 60_000
     ) {
       this.lastEyePromptAt = now;
@@ -64,4 +65,3 @@ export class BreakScheduler {
     this.lastFatiguePromptAt = 0;
   }
 }
-

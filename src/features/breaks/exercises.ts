@@ -11,8 +11,8 @@ export const exercises: ExerciseDefinition[] = [
     steps: [
       { label: 'Look 20 feet away', duration: 20, cue: 'Relax your gaze into the distance.' },
       { label: 'Slow blink set', duration: 20, cue: 'Close, release, and reopen your eyes.' },
-      { label: 'Soft focus reset', duration: 20, cue: 'Let your eyes rest before returning.' }
-    ]
+      { label: 'Soft focus reset', duration: 20, cue: 'Let your eyes rest before returning.' },
+    ],
   },
   {
     id: 'wrist',
@@ -24,8 +24,8 @@ export const exercises: ExerciseDefinition[] = [
     steps: [
       { label: 'Gentle rotations', duration: 25, cue: 'Circle both wrists slowly.' },
       { label: 'Palm flex', duration: 25, cue: 'Press fingers back with an easy stretch.' },
-      { label: 'Release shakeout', duration: 25, cue: 'Shake the hands loose.' }
-    ]
+      { label: 'Release shakeout', duration: 25, cue: 'Shake the hands loose.' },
+    ],
   },
   {
     id: 'neck',
@@ -37,11 +37,10 @@ export const exercises: ExerciseDefinition[] = [
     steps: [
       { label: 'Turn left and hold', duration: 30, cue: 'Keep shoulders low and jaw relaxed.' },
       { label: 'Turn right and hold', duration: 30, cue: 'Move slowly through the center.' },
-      { label: 'Forward release', duration: 30, cue: 'Drop chin gently and breathe.' }
-    ]
-  }
+      { label: 'Forward release', duration: 30, cue: 'Drop chin gently and breathe.' },
+    ],
+  },
 ];
 
 export const getExerciseById = (id: string): ExerciseDefinition | undefined =>
   exercises.find((exercise) => exercise.id === id);
-

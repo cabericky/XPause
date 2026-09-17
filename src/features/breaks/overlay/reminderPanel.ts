@@ -4,7 +4,7 @@ export const renderReminderPanelHtml = (
   kind: ReminderKind,
   urgency: BreakUrgency,
   score: number,
-  theme: 'light' | 'dark'
+  theme: 'light' | 'dark',
 ): string => {
   const themeClass = `xp-theme-${theme}`;
   const isSocial = kind === 'social';
@@ -30,4 +30,3 @@ export const renderReminderPanelHtml = (
     </aside>
   `;
 };
-

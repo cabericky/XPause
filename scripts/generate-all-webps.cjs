@@ -3,7 +3,24 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const webpmuxExe = path.join(__dirname, '../node_modules/@nwrks/webp-converter/bin/libwebp_win64/bin/webpmux.exe');
+function getWebpmuxExe() {
+  const base = path.join(__dirname, '../node_modules/@nwrks/webp-converter/bin');
+  const platform = process.platform;
+  const arch = process.arch;
+
+  if (platform === 'win32') {
+    return path.join(base, 'libwebp_win64/bin/webpmux.exe');
+  } else if (platform === 'darwin') {
+    const dir = arch === 'arm64' ? 'libwebp_osx_arm' : 'libwebp_osx';
+    return path.join(base, dir, 'bin/webpmux');
+  } else if (platform === 'linux') {
+    const dir = arch === 'arm64' ? 'libwebp_linux_arm' : 'libwebp_linux';
+    return path.join(base, dir, 'bin/webpmux');
+  }
+  return path.join(base, 'libwebp_win64/bin/webpmux.exe');
+}
+
+const webpmuxExe = getWebpmuxExe();
 
 async function createAnimatedWebp(framesSvg, outputPath, frameDurationMs = 100) {
   const tmpDir = path.join(__dirname, '../.tmp_frames_' + Math.random().toString(36).substring(7));
@@ -13,9 +30,7 @@ async function createAnimatedWebp(framesSvg, outputPath, frameDurationMs = 100) 
     const args = [];
     for (let i = 0; i < framesSvg.length; i++) {
       const framePath = path.join(tmpDir, `frame_${i}.webp`);
-      await sharp(Buffer.from(framesSvg[i]))
-        .webp({ lossless: true })
-        .toFile(framePath);
+      await sharp(Buffer.from(framesSvg[i])).webp({ lossless: true }).toFile(framePath);
       args.push('-frame', framePath, `+${frameDurationMs}+0+0+1-b`);
     }
 
@@ -297,4 +312,3 @@ async function main() {
 }
 
 main().catch(console.error);
-

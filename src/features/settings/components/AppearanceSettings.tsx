@@ -14,12 +14,12 @@ const themeModes: Array<{
 }> = [
   { id: 'light', label: 'Light', icon: Sun },
   { id: 'dark', label: 'Dark', icon: Moon },
-  { id: 'system', label: 'System', icon: Laptop }
+  { id: 'system', label: 'System', icon: Laptop },
 ];
 
 export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
   settings,
-  onSaveSettings
+  onSaveSettings,
 }) => {
   return (
     <div className="settings-section">
@@ -43,4 +43,3 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
     </div>
   );
 };
-

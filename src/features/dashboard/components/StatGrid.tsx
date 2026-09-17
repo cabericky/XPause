@@ -4,11 +4,13 @@ import type { ExtensionStats } from '../../../types';
 
 interface StatGridProps {
   stats: ExtensionStats;
+  dailyGoal?: number;
 }
 
-export const StatGrid: React.FC<StatGridProps> = ({ stats }) => {
+export const StatGrid: React.FC<StatGridProps> = ({ stats, dailyGoal = 4 }) => {
   const level = Math.floor(stats.xp / 500) + 1;
   const xpProgress = stats.xp % 500;
+  const todayCount = stats.daily.completed + stats.daily.partial;
 
   return (
     <>
@@ -20,7 +22,15 @@ export const StatGrid: React.FC<StatGridProps> = ({ stats }) => {
         </div>
         <div>
           <RotateCcw size={16} />
-          <strong>{stats.daily.completed + stats.daily.partial}</strong>
+          <strong>
+            {todayCount}
+            {dailyGoal > 0 ? (
+              <small style={{ fontSize: '0.72rem', opacity: 0.75, fontWeight: 500 }}>
+                {' '}
+                / {dailyGoal}
+              </small>
+            ) : null}
+          </strong>
           <span>Today</span>
         </div>
         <div>
@@ -30,13 +40,9 @@ export const StatGrid: React.FC<StatGridProps> = ({ stats }) => {
         </div>
       </section>
 
-      <div
-        className="meter small"
-        aria-label={`${xpProgress} XP toward next level`}
-      >
+      <div className="meter small" aria-label={`${xpProgress} XP toward next level`}>
         <span style={{ width: `${(xpProgress / 500) * 100}%` }} />
       </div>
     </>
   );
 };
-

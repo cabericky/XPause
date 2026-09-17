@@ -50,9 +50,18 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({ onBack }) => {
           Data used
         </h2>
         <ul className="privacy-list">
-          <li>Pointer movement, clicks, keyboard activity counts, scrolling, idle time, and tab visibility.</li>
-          <li>Local screen-time summaries, active/passive time, social-site visits, and broad usage categories.</li>
-          <li>Break completions, skipped reminders, XP, badges, exercise choices, sounds, and theme settings.</li>
+          <li>
+            Pointer movement, clicks, keyboard activity counts, scrolling, idle time, and tab
+            visibility.
+          </li>
+          <li>
+            Local screen-time summaries, active/passive time, social-site visits, and broad usage
+            categories.
+          </li>
+          <li>
+            Break completions, skipped reminders, XP, badges, exercise choices, sounds, and theme
+            settings.
+          </li>
         </ul>
       </section>
 
@@ -74,4 +83,3 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({ onBack }) => {
     </main>
   );
 };
-
